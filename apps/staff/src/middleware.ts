@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const appKind = process.env.NEXT_PUBLIC_APP_KIND || "brand";
-
 const staffAllowedPaths = [
   "/admin-login",
   "/teacher-login",
@@ -26,22 +24,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (appKind === "staff") {
-    const allowed = staffAllowedPaths.some((path) => pathname.startsWith(path));
-    if (!allowed) {
-      return NextResponse.redirect(new URL("/admin-login", request.url));
-    }
-  }
-
-  if (appKind === "brand") {
-    if (
-      pathname.startsWith("/admin-login") ||
-      pathname.startsWith("/teacher-login") ||
-      pathname.startsWith("/dashboard/admin") ||
-      pathname.startsWith("/dashboard/teacher")
-    ) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+  const allowed = staffAllowedPaths.some((path) => pathname.startsWith(path));
+  if (!allowed) {
+    return NextResponse.redirect(new URL("/admin-login", request.url));
   }
 
   return NextResponse.next();
