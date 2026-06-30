@@ -2,6 +2,7 @@
   "name": "qawmi-learning-platform",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "dev": "turbo dev",
     "dev:muslim-school": "pnpm --dir apps/muslim-school dev",
