@@ -1,6 +1,7 @@
 import {
   BarChart,
   Bot,
+  ClipboardList,
   Library,
   LogOut,
   SearchCode,
@@ -34,6 +35,18 @@ export const baseSidebarItems = [
     url: "/dashboard/{role}/analytics",
     icon: BarChart,
     roles: ["admin", "teacher"],
+  },
+  {
+    title: "Teacher Ops",
+    url: "/dashboard/admin/teacher-ops",
+    icon: ClipboardList,
+    roles: ["admin"],
+    items: [
+      { title: "Overview", url: "/dashboard/admin/teacher-ops" },
+      { title: "Teacher Profile", url: "/dashboard/admin/teacher-ops/teachers/TID2511" },
+      { title: "Curriculum", url: "/dashboard/admin/teacher-ops/curriculum" },
+      { title: "Import Sheet", url: "/dashboard/admin/teacher-ops/import" },
+    ],
   },
   {
     title: "Student Admition",
@@ -124,6 +137,18 @@ export const baseSidebarItems = [
     url: "/dashboard/my-courses",
     icon: Bot,
     roles: ["teacher", "student"],
+  },
+  {
+    title: "Teacher Operations",
+    url: "/dashboard/teacher/operations",
+    icon: ClipboardList,
+    roles: ["teacher"],
+  },
+  {
+    title: "Parent Portal",
+    url: "/dashboard/student/parent-portal",
+    icon: ClipboardList,
+    roles: ["student"],
   },
   {
     title: "Sent Feedback",

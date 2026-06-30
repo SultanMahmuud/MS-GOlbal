@@ -1,6 +1,7 @@
 import {
   BarChart,
   Bot,
+  ClipboardList,
   Library,
   LogOut,
   SearchCode,
@@ -124,6 +125,12 @@ export const baseSidebarItems = [
     url: "/dashboard/my-courses",
     icon: Bot,
     roles: ["teacher", "student"],
+  },
+  {
+    title: "Parent Portal",
+    url: "/dashboard/student/parent-portal",
+    icon: ClipboardList,
+    roles: ["student"],
   },
   {
     title: "Sent Feedback",

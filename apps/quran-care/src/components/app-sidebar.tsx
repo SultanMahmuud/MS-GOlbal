@@ -4,6 +4,7 @@
 import {
   BarChart,
   Bot,
+  ClipboardList,
   Library,
   LogOut,
   SearchCode,
@@ -143,6 +144,12 @@ const baseData = {
       url: "/dashboard/my-courses",
       icon: Bot,
       roles: ["teacher","student"],
+    },
+    {
+      title: "Parent Portal",
+      url: "/dashboard/student/parent-portal",
+      icon: ClipboardList,
+      roles: ["student"],
     },
     {
       title: "Annalytics",

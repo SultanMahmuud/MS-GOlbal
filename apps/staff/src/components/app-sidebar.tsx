@@ -4,6 +4,7 @@
 import {
   BarChart,
   Bot,
+  ClipboardList,
   Library,
   LogOut,
   SearchCode,
@@ -62,6 +63,18 @@ const baseData = {
       url: "/dashboard/admin/analytics",
       icon: BarChart,
       roles: ["admin"],
+    },
+    {
+      title: "Teacher Ops",
+      url: "/dashboard/admin/teacher-ops",
+      icon: ClipboardList,
+      roles: ["admin"],
+      items: [
+        { title: "Overview", url: "/dashboard/admin/teacher-ops" },
+        { title: "Teacher Profile", url: "/dashboard/admin/teacher-ops/teachers/TID2511" },
+        { title: "Curriculum", url: "/dashboard/admin/teacher-ops/curriculum" },
+        { title: "Import Sheet", url: "/dashboard/admin/teacher-ops/import" },
+      ],
     },
 
     {
@@ -143,6 +156,18 @@ const baseData = {
       url: "/dashboard/my-courses",
       icon: Bot,
       roles: ["teacher","student"],
+    },
+    {
+      title: "Teacher Operations",
+      url: "/dashboard/teacher/operations",
+      icon: ClipboardList,
+      roles: ["teacher"],
+    },
+    {
+      title: "Parent Portal",
+      url: "/dashboard/student/parent-portal",
+      icon: ClipboardList,
+      roles: ["student"],
     },
     {
       title: "Annalytics",

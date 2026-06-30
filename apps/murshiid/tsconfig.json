@@ -47,8 +47,7 @@
     "src/components/UI/sidebar.jsx",
     "src/app/(dashboardLayout)/dashboard/admin/course/page.jsx",
     "src/app/(dashboardLayout)/layout.jsx",
-    "src/redux/hooks.ts",
-    ".next/dev/types/**/*.ts"
+    "src/redux/hooks.ts"
   ],
   "exclude": [
     "node_modules"
