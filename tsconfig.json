@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    
+  },
+  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx", "src/app/(withCommonLayout)/courses/page.jsx", "src/app/(withCommonLayout)/live-batch/page.jsx", "src/services/auth.services.js", "src/services/actions/deleteCookies.js", "src/services/actions/logoutUser.js", "src/services/actions/registerPatient.js", "src/services/actions/setAccessToken.js", "src/services/actions/userLogin.js", "src/utils/local-storage.js", "src/components/UI/sidebar.jsx", "src/app/(dashboardLayout)/dashboard/admin/course/page.jsx", "src/app/(dashboardLayout)/layout.jsx", "src/redux/hooks.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@qawmi/shared-auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "lint": "echo shared-auth lint"
+  },
+  "dependencies": {
+    "@qawmi/shared-api": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}
