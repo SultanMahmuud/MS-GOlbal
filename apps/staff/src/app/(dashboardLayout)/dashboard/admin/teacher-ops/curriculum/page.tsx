@@ -1,5 +1,5 @@
-import { TeacherOpsCurriculumPage } from "@/features/teacher-ops/pages/curriculum-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <TeacherOpsCurriculumPage />;
+  redirect("/dashboard/admin/curriculum-management");
 }

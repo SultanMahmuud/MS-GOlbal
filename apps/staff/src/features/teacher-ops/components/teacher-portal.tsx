@@ -28,12 +28,19 @@ import type {
 } from "@/features/teacher-ops/lib/types";
 import { cn, statusLabel } from "@/features/teacher-ops/lib/utils";
 import { addMinutes, getPlanRoutineLabel, getRoutineLabel } from "@/features/teacher-ops/lib/data";
+import { getApiBaseUrl, getBrandHeaders } from "@/lib/brand-config";
 
 type LocalSessionStatus = "completed" | "missed" | "rescheduled";
 
 function percent(summary?: AttendanceSummary) {
   if (!summary || !summary.scheduledClasses) return 0;
   return Math.round((summary.attendedClasses / summary.scheduledClasses) * 100);
+}
+
+function getAuthHeaders() {
+  if (typeof window === "undefined") return {};
+  const token = window.localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export function TeacherPortal({
@@ -66,6 +73,11 @@ export function TeacherPortal({
   const [currentLessons, setCurrentLessons] = useState<Record<string, string>>({});
   const [complaintText, setComplaintText] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
+  const [leaveFromDate, setLeaveFromDate] = useState("");
+  const [leaveToDate, setLeaveToDate] = useState("");
+  const [leaveReason, setLeaveReason] = useState("");
+  const [leaveNote, setLeaveNote] = useState("");
+  const [leaveRequestType, setLeaveRequestType] = useState<"leave" | "late_join">("leave");
 
   const selectedStudentData = students.find((student) => student.id === selectedStudent) ?? students[0];
   const studentPlans = plans.filter((plan) => plan.studentId === selectedStudentData?.id);
@@ -110,6 +122,38 @@ export function TeacherPortal({
     }
     setSavedNotice(`Complaint created for ${selectedStudentData.name}. Admin can review it in the issue queue.`);
     setComplaintText("");
+  }
+
+  async function submitLeaveRequest() {
+    if (!leaveFromDate || !leaveReason.trim()) {
+      setSavedNotice("Add leave date and reason before submitting.");
+      return;
+    }
+
+    const payload = {
+      teacherCode: teacher.id,
+      requestType: leaveRequestType,
+      fromDate: leaveFromDate,
+      toDate: leaveToDate || leaveFromDate,
+      reason: leaveReason.trim(),
+      note: leaveNote.trim(),
+    };
+
+    await fetch(`${getApiBaseUrl()}/teacher-leaves`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getBrandHeaders(),
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(payload),
+    }).catch(() => null);
+
+    setSavedNotice(
+      `${leaveRequestType === "late_join" ? "Late join" : "Leave"} request submitted for admin review.`,
+    );
+    setLeaveReason("");
+    setLeaveNote("");
   }
 
   return (
@@ -405,21 +449,60 @@ export function TeacherPortal({
           </Card>
 
           <Card>
-            <CardHeader title="Leave or late join" eyebrow="Teacher request" />
+            <CardHeader title="Leave request" eyebrow="Teacher to admin" />
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <FieldLabel htmlFor="leave-date">Date</FieldLabel>
-                  <TextInput id="leave-date" type="date" />
+                  <FieldLabel htmlFor="leave-type">Request type</FieldLabel>
+                  <select
+                    id="leave-type"
+                    value={leaveRequestType}
+                    onChange={(event) => setLeaveRequestType(event.target.value as "leave" | "late_join")}
+                    className="mt-2 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
+                  >
+                    <option value="leave">Leave</option>
+                    <option value="late_join">Late join</option>
+                  </select>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel htmlFor="leave-from-date">From date</FieldLabel>
+                    <TextInput
+                      id="leave-from-date"
+                      type="date"
+                      value={leaveFromDate}
+                      onChange={(event) => setLeaveFromDate(event.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor="leave-to-date">To date</FieldLabel>
+                    <TextInput
+                      id="leave-to-date"
+                      type="date"
+                      value={leaveToDate}
+                      onChange={(event) => setLeaveToDate(event.target.value)}
+                    />
+                  </div>
                 </div>
                 <div>
                   <FieldLabel htmlFor="leave-reason">Reason</FieldLabel>
                   <TextArea
                     id="leave-reason"
-                    placeholder="Leave request, late join reason, or note for admin"
+                    value={leaveReason}
+                    onChange={(event) => setLeaveReason(event.target.value)}
+                    placeholder="Example: Medical appointment, family emergency, internet outage"
                   />
                 </div>
-                <Button type="button">
+                <div>
+                  <FieldLabel htmlFor="leave-note">Optional note</FieldLabel>
+                  <TextArea
+                    id="leave-note"
+                    value={leaveNote}
+                    onChange={(event) => setLeaveNote(event.target.value)}
+                    placeholder="Class handover, replacement plan, or timing details"
+                  />
+                </div>
+                <Button type="button" onClick={submitLeaveRequest}>
                   <Send className="h-4 w-4" />
                   Submit request
                 </Button>

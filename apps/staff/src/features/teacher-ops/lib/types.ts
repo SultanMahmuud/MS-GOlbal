@@ -26,6 +26,8 @@ export type Teacher = {
   status: "active" | "needs_attention" | "paused";
   salaryType: "monthly" | "class_based";
   baseSalary: number;
+  hourlySalaryRate: number;
+  joiningDate: string;
   totalClassHours: number;
   totalMissedClasses: number;
   activeStudents: number;
@@ -69,6 +71,7 @@ export type Course = {
   name: string;
   description: string;
   department: string;
+  coverImage?: string;
 };
 
 export type CurriculumModule = {
@@ -96,6 +99,10 @@ export type StudentCoursePlan = {
   weeklyDays: string[];
   startTime: string;
   durationMinutes: number;
+  monthlyFee?: number;
+  teacherHourlyRate?: number;
+  startDate?: string;
+  endDate?: string;
   currentLessonId: string;
   completedLessonIds: string[];
   assignedLessonIds: string[];
@@ -191,15 +198,62 @@ export type Issue = {
 export type LeaveRequest = {
   id: string;
   teacherId: string;
-  date: string;
+  date?: string;
+  fromDate: string;
+  toDate: string;
+  daysCount: number;
+  requestType: "leave" | "late_join";
   reason: string;
+  note?: string;
   status: "pending" | "approved" | "rejected";
+  adminDecisionNote?: string;
+  approvedBy?: string;
+  approvedAt?: string;
 };
 
 export type MonthlyStudentSnapshot = {
   month: string;
   count: number;
   reason: string;
+};
+
+export type TeacherHealthBreakdown = {
+  score: number;
+  classReliability: number;
+  attendanceUpdate: number;
+  progressDiscipline: number;
+  weeklyFeedback: number;
+  complaintQuality: number;
+  missedClasses: number;
+  openIssues: number;
+  progressGaps: number;
+  lateJoins: number;
+  feedbackMissing: number;
+};
+
+export type TeacherSalaryBreakdown = {
+  totalMinutes: number;
+  classHours: number;
+  salaryUnit: number;
+  teacherHourlyRate: number;
+  payableSalary: number;
+  source: "actual_sessions" | "assigned_schedule";
+};
+
+export type TeacherFinancialSummary = {
+  currentStudentBilling: number;
+  lifetimeStudentBilling: number;
+  currentSalary: number;
+  lastMonthSalary: number;
+  lifetimeSalary: number;
+  salaryBreakdown: TeacherSalaryBreakdown;
+};
+
+export type TeacherLeaveSummary = {
+  lastLeave: string;
+  lastMonthLeave: number;
+  totalLeave: number;
+  pending: LeaveRequest[];
 };
 
 export type AppData = {

@@ -1,4 +1,5 @@
 import {
+  Activity,
   AlertTriangle,
   CalendarClock,
   Clock3,
@@ -11,91 +12,104 @@ import { Card, CardContent, CardHeader } from "@/features/teacher-ops/components
 import { ButtonLink } from "@/features/teacher-ops/components/ui/button";
 import { IssueQueue } from "@/features/teacher-ops/components/issue-queue";
 import { MetricCard } from "@/features/teacher-ops/components/metric-card";
-import { ScheduleGrid } from "@/features/teacher-ops/components/schedule-grid";
-import { StudentTable } from "@/features/teacher-ops/components/student-table";
 import { StudentTrendChart } from "@/features/teacher-ops/components/student-trend-chart";
-import { TeacherHealth } from "@/features/teacher-ops/components/teacher-health";
 import { TeacherMonthlyReport } from "@/features/teacher-ops/components/teacher-monthly-report";
 import {
   appData,
   attentionItems,
+  averageTeacherHealthScore,
+  getAllTeacherStudentTrend,
+  getAllTeacherStudents,
   getTeacherIssues,
   getTeacherMonthlySummaries,
-  getTeacherProgress,
-  getTeacherStudents,
+  teacherHealthBreakdown,
 } from "@/features/teacher-ops/lib/data";
-import { formatCurrency, formatNumber, minutesToHours } from "@/features/teacher-ops/lib/utils";
+import { cn, formatCurrency, formatNumber, minutesToHours } from "@/features/teacher-ops/lib/utils";
 
 export function TeacherOpsAdminDashboard() {
-  const { teacher, bookings, monthlyTrend, sessions } = appData;
-  const teacherStudents = getTeacherStudents(teacher.id);
-  const teacherProgress = getTeacherProgress(teacher.id);
+  const { teachers, students, sessions } = appData;
+  const allTeacherStudents = getAllTeacherStudents();
   const teacherMonthlySummaries = getTeacherMonthlySummaries();
   const openAttention = attentionItems().filter((issue) => issue.status !== "resolved");
-  const monthlyRevenue = teacherStudents.reduce(
+  const monthlyRevenue = allTeacherStudents.reduce(
     (sum, student) => sum + student.monthlyFee,
+    0,
+  );
+  const totalClassHours = teachers.reduce(
+    (sum, teacher) => sum + Number(teacher.totalClassHours || 0),
     0,
   );
   const completedMinutes = sessions
     .filter((session) => session.status === "completed")
     .reduce((sum, session) => sum + session.durationMinutes, 0);
+  const healthAverage = averageTeacherHealthScore();
+  const allTeacherTrend = getAllTeacherStudentTrend();
 
   return (
-    <div className="min-h-[calc(100vh-2.5rem)] rounded-lg bg-zinc-950 text-zinc-100">
+    <div className="min-h-[calc(100vh-2.5rem)] rounded-lg bg-slate-50 text-slate-950 dark:bg-zinc-950 dark:text-zinc-100">
       <div className="px-4 py-6 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm text-zinc-500">Admin overview</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-50">
+            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+              Admin overview
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-zinc-50">
               Teacher operations dashboard
             </h1>
-            <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-              Track teacher health, student routines, schedule occupancy, progress
-              gaps, and parent complaints from one admin screen.
+            <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-zinc-400">
+              Track all teacher health, billing, active students, progress gaps,
+              complaints, and student-count movement from one admin screen.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <ButtonLink href="/dashboard/admin/teacher-ops/import">
+            <ButtonLink href="/dashboard/admin/teacher-assign/import">
               <CalendarClock className="h-4 w-4" />
               Import sheet
             </ButtonLink>
-            <ButtonLink href="/dashboard/admin/teacher-ops/teachers/TID2511" variant="primary">
+            <ButtonLink href="/dashboard/admin/teacher-assign/teachers" variant="primary">
               <GraduationCap className="h-4 w-4" />
-              Open profile
+              Open teacher profile
             </ButtonLink>
           </div>
         </header>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <MetricCard
             label="Needs attention"
             value={openAttention.length}
-            detail="Open issues, missed classes, progress gaps"
+            detail="Open issues across all teachers"
             trend="down"
             tone="warning"
             icon={<AlertTriangle className="h-5 w-5" />}
           />
           <MetricCard
             label="Active students"
-            value={formatNumber(teacherStudents.length)}
-            detail={`${monthlyTrend.at(-1)?.count ?? teacherStudents.length} target in next month`}
+            value={formatNumber(allTeacherStudents.length)}
+            detail={`${formatNumber(students.length)} total student records`}
             trend="up"
             tone="success"
             icon={<UsersRound className="h-5 w-5" />}
           />
           <MetricCard
             label="Class hours"
-            value={teacher.totalClassHours}
-            detail={`${minutesToHours(completedMinutes)}h completed in visible sessions`}
+            value={totalClassHours.toFixed(1)}
+            detail={`${minutesToHours(completedMinutes)}h completed in imported sessions`}
             trend="flat"
             icon={<Clock3 className="h-5 w-5" />}
           />
           <MetricCard
             label="Monthly billing"
             value={formatCurrency(monthlyRevenue)}
-            detail="From active students in this teacher profile"
+            detail="All active teacher assignments"
             trend="up"
             icon={<MessageSquareWarning className="h-5 w-5" />}
+          />
+          <MetricCard
+            label="Avg teacher health"
+            value={`${healthAverage}/100`}
+            detail={`${teachers.length} teachers included`}
+            tone={healthAverage >= 80 ? "success" : healthAverage >= 60 ? "warning" : "danger"}
+            icon={<Activity className="h-5 w-5" />}
           />
         </section>
 
@@ -107,20 +121,67 @@ export function TeacherOpsAdminDashboard() {
                 teachers={appData.teachers}
                 students={appData.students}
                 courses={appData.courses}
+                plans={appData.studentCoursePlans}
                 initialBookings={appData.bookings}
               />
             </CardContent>
           </Card>
         </section>
 
-        <section className="mt-6">
+        <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <Card>
             <CardHeader
               title="Teacher growth and drop report"
-              eyebrow="Monthly student-count variation"
+              eyebrow="All-teacher monthly student-count variation"
             />
             <CardContent>
               <TeacherMonthlyReport summaries={teacherMonthlySummaries} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader title="Teacher health summary" eyebrow="Average and individual score" />
+            <CardContent>
+              <div className="space-y-3">
+                {teachers.map((teacher) => {
+                  const breakdown = teacherHealthBreakdown(teacher);
+                  return (
+                    <ButtonLink
+                      key={teacher.id}
+                      href={`/dashboard/admin/teacher-assign/teachers/${teacher.id}`}
+                      variant="ghost"
+                      className="h-auto w-full justify-start rounded-lg border-slate-200 bg-slate-50 p-4 text-left hover:bg-slate-100 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:bg-zinc-900"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="truncate text-sm font-semibold text-slate-950 dark:text-zinc-50">
+                            {teacher.name}
+                          </p>
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-1 text-xs font-semibold",
+                              breakdown.score >= 80 &&
+                                "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200",
+                              breakdown.score >= 60 &&
+                                breakdown.score < 80 &&
+                                "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-200",
+                              breakdown.score < 60 &&
+                                "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-200",
+                            )}
+                          >
+                            {breakdown.score}/100
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+                          {getTeacherIssues(teacher.id).filter((issue) => issue.status !== "resolved").length} open issues,
+                          {" "}
+                          {teacher.activeStudents} active students
+                        </p>
+                      </div>
+                    </ButtonLink>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         </section>
@@ -129,69 +190,24 @@ export function TeacherOpsAdminDashboard() {
           <Card>
             <CardHeader title="Attention queue" eyebrow="Admin should start here" />
             <CardContent>
-              <IssueQueue issues={openAttention.slice(0, 5)} />
+              <IssueQueue issues={openAttention.slice(0, 8)} />
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader title="Student trend" eyebrow="Last 7 months" />
+            <CardHeader title="Student trend" eyebrow="All teachers, last months" />
             <CardContent>
-              <StudentTrendChart data={monthlyTrend} />
+              <StudentTrendChart data={allTeacherTrend} />
               <div className="mt-4 space-y-2">
-                {monthlyTrend.slice(-3).map((month) => (
-                  <p key={month.month} className="text-sm text-zinc-500">
-                    <span className="font-medium text-zinc-300">{month.month}:</span>{" "}
+                {allTeacherTrend.slice(-3).map((month) => (
+                  <p key={month.month} className="text-sm text-slate-500 dark:text-zinc-400">
+                    <span className="font-medium text-slate-700 dark:text-zinc-300">
+                      {month.month}:
+                    </span>{" "}
                     {month.reason}
                   </p>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mt-6 grid gap-6 xl:grid-cols-[0.65fr_1.35fr]">
-          <Card>
-            <CardHeader title={teacher.name} eyebrow="Teacher health" />
-            <CardContent>
-              <TeacherHealth teacher={teacher} />
-              <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <dt className="text-zinc-500">Teacher ID</dt>
-                  <dd className="mt-1 font-medium text-zinc-50">{teacher.id}</dd>
-                </div>
-                <div>
-                  <dt className="text-zinc-500">Missed classes</dt>
-                  <dd className="mt-1 font-medium text-zinc-50">
-                    {teacher.totalMissedClasses}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-zinc-500">Last leave</dt>
-                  <dd className="mt-1 font-medium text-zinc-50">{teacher.lastLeaveDate}</dd>
-                </div>
-                <div>
-                  <dt className="text-zinc-500">Open issues</dt>
-                  <dd className="mt-1 font-medium text-zinc-50">
-                    {getTeacherIssues(teacher.id).filter((issue) => issue.status !== "resolved").length}
-                  </dd>
-                </div>
-              </dl>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader title="Weekly schedule grid" eyebrow="Imported 10-minute slots" />
-            <CardContent>
-              <ScheduleGrid bookings={bookings} />
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mt-6">
-          <Card>
-            <CardHeader title="Students and syllabus position" eyebrow="Roster" />
-            <CardContent className="p-0">
-              <StudentTable students={teacherStudents} progress={teacherProgress} />
             </CardContent>
           </Card>
         </section>

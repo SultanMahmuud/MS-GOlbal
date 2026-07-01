@@ -26,27 +26,27 @@ export function StudentTrendChart({
               <stop offset="95%" stopColor="#34d399" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="#27272a" strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid stroke="#cbd5e1" strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey="month"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: "#a1a1aa", fontSize: 12 }}
+            tick={{ fill: "#64748b", fontSize: 12 }}
           />
           <YAxis
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
-            tick={{ fill: "#a1a1aa", fontSize: 12 }}
+            tick={{ fill: "#64748b", fontSize: 12 }}
           />
           <Tooltip
             contentStyle={{
-              background: "#09090b",
-              border: "1px solid #27272a",
+              background: "#ffffff",
+              border: "1px solid #cbd5e1",
               borderRadius: 8,
-              color: "#fafafa",
+              color: "#0f172a",
             }}
-            labelStyle={{ color: "#fafafa" }}
+            labelStyle={{ color: "#0f172a" }}
           />
           <Area
             type="monotone"

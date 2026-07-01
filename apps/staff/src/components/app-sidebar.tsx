@@ -71,10 +71,15 @@ const baseData = {
       roles: ["admin"],
       items: [
         { title: "Overview", url: "/dashboard/admin/teacher-assign" },
-        { title: "Teacher Profile", url: "/dashboard/admin/teacher-assign/teachers/TID2511" },
-        { title: "Curriculum Management", url: "/dashboard/admin/curriculum-management" },
+        { title: "Teacher Profile", url: "/dashboard/admin/teacher-assign/teachers" },
         { title: "Import Sheet", url: "/dashboard/admin/teacher-assign/import" },
       ],
+    },
+    {
+      title: "Curriculum Management",
+      url: "/dashboard/admin/curriculum-management",
+      icon: ClipboardList,
+      roles: ["admin"],
     },
 
     {

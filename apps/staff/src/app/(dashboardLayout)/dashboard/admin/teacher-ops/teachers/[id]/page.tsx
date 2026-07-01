@@ -1,4 +1,4 @@
-import { TeacherOpsTeacherProfilePage } from "@/features/teacher-ops/pages/teacher-profile-page";
+import { redirect } from "next/navigation";
 
 export default async function Page({
   params,
@@ -6,5 +6,5 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <TeacherOpsTeacherProfilePage id={id} />;
+  redirect(`/dashboard/admin/teacher-assign/teachers/${id}`);
 }

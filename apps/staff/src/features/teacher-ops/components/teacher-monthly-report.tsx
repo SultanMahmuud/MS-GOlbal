@@ -42,28 +42,28 @@ export function TeacherMonthlyReport({
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Current students</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-50">{currentTotal}</p>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-500">Current students</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-zinc-50">{currentTotal}</p>
         </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Previous month</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-50">{previousTotal}</p>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-500">Previous month</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-zinc-50">{previousTotal}</p>
         </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Net change</p>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-500">Net change</p>
           <p
             className={cn(
               "mt-2 text-2xl font-semibold",
-              currentTotal - previousTotal >= 0 ? "text-emerald-200" : "text-rose-200",
+              currentTotal - previousTotal >= 0 ? "text-emerald-600 dark:text-emerald-200" : "text-rose-600 dark:text-rose-200",
             )}
           >
             {signedNumber(currentTotal - previousTotal)}
           </p>
         </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Assigned value</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-50">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-500">Assigned value</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950 dark:text-zinc-50">
             {formatCurrency(totalAssignedValue)}
           </p>
         </div>
@@ -72,37 +72,37 @@ export function TeacherMonthlyReport({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1040px] border-separate border-spacing-0 text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="border-b border-zinc-800 px-4 py-3">Teacher</th>
-              <th className="border-b border-zinc-800 px-4 py-3">Current</th>
-              <th className="border-b border-zinc-800 px-4 py-3">Previous</th>
-              <th className="border-b border-zinc-800 px-4 py-3">Change</th>
-              <th className="border-b border-zinc-800 px-4 py-3">Added</th>
-              <th className="border-b border-zinc-800 px-4 py-3">Dropped</th>
-              <th className="border-b border-zinc-800 px-4 py-3">Assigned value</th>
-              <th className="border-b border-zinc-800 px-4 py-3">6-month pattern</th>
-              <th className="border-b border-zinc-800 px-4 py-3">Reason</th>
-              <th className="border-b border-zinc-800 px-4 py-3" />
+            <tr className="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-500">
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">Teacher</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">Current</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">Previous</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">Change</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">Added</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">Dropped</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">Assigned value</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">6-month pattern</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800">Reason</th>
+              <th className="border-b border-slate-200 px-4 py-3 dark:border-zinc-800" />
             </tr>
           </thead>
           <tbody>
             {summaries.map((summary) => (
-              <tr key={summary.teacher.id} className="text-zinc-200">
-                <td className="border-b border-zinc-900 px-4 py-4">
-                  <p className="font-medium text-zinc-50">{summary.teacher.name}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{summary.teacher.id}</p>
+              <tr key={summary.teacher.id} className="text-slate-700 dark:text-zinc-200">
+                <td className="border-b border-slate-100 px-4 py-4 dark:border-zinc-900">
+                  <p className="font-medium text-slate-950 dark:text-zinc-50">{summary.teacher.name}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">{summary.teacher.id}</p>
                 </td>
-                <td className="border-b border-zinc-900 px-4 py-4">
-                  <p className="font-semibold text-zinc-50">
+                <td className="border-b border-slate-100 px-4 py-4 dark:border-zinc-900">
+                  <p className="font-semibold text-slate-950 dark:text-zinc-50">
                     {summary.current?.activeStudents ?? 0}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-500">{summary.current?.month}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">{summary.current?.month}</p>
                 </td>
-                <td className="border-b border-zinc-900 px-4 py-4">
+                <td className="border-b border-slate-100 px-4 py-4 dark:border-zinc-900">
                   <p>{summary.previous?.activeStudents ?? 0}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{summary.previous?.month}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">{summary.previous?.month}</p>
                 </td>
-                <td className="border-b border-zinc-900 px-4 py-4">
+                <td className="border-b border-slate-100 px-4 py-4 dark:border-zinc-900">
                   <Badge
                     tone={
                       summary.trend === "up"
@@ -116,27 +116,27 @@ export function TeacherMonthlyReport({
                     {signedNumber(summary.studentDelta)}
                   </Badge>
                 </td>
-                <td className="border-b border-zinc-900 px-4 py-4 text-emerald-200">
+                <td className="border-b border-slate-100 px-4 py-4 text-emerald-600 dark:border-zinc-900 dark:text-emerald-200">
                   +{summary.current?.addedStudents ?? 0}
                 </td>
-                <td className="border-b border-zinc-900 px-4 py-4 text-rose-200">
+                <td className="border-b border-slate-100 px-4 py-4 text-rose-600 dark:border-zinc-900 dark:text-rose-200">
                   -{summary.current?.droppedStudents ?? 0}
                 </td>
-                <td className="border-b border-zinc-900 px-4 py-4">
-                  <p className="font-medium text-zinc-50">
+                <td className="border-b border-slate-100 px-4 py-4 dark:border-zinc-900">
+                  <p className="font-medium text-slate-950 dark:text-zinc-50">
                     {formatCurrency(summary.current?.assignedMonthlyValue ?? 0)}
                   </p>
                   <p
                     className={cn(
                       "mt-1 text-xs",
-                      summary.valueDelta >= 0 ? "text-emerald-200" : "text-rose-200",
+                      summary.valueDelta >= 0 ? "text-emerald-600 dark:text-emerald-200" : "text-rose-600 dark:text-rose-200",
                     )}
                   >
                     {summary.valueDelta >= 0 ? "+" : ""}
                     {formatCurrency(summary.valueDelta)}
                   </p>
                 </td>
-                <td className="border-b border-zinc-900 px-4 py-4">
+                <td className="border-b border-slate-100 px-4 py-4 dark:border-zinc-900">
                   <div className="flex h-12 items-end gap-1.5">
                     {summary.snapshots.map((snapshot) => (
                       <div
@@ -150,18 +150,18 @@ export function TeacherMonthlyReport({
                             height: `${Math.max(12, (snapshot.activeStudents / maxStudents) * 42)}px`,
                           }}
                         />
-                        <span className="text-[10px] text-zinc-500">
+                        <span className="text-[10px] text-slate-500 dark:text-zinc-500">
                           {snapshot.month.slice(0, 3)}
                         </span>
                       </div>
                     ))}
                   </div>
                 </td>
-                <td className="max-w-xs border-b border-zinc-900 px-4 py-4 text-zinc-400">
+                <td className="max-w-xs border-b border-slate-100 px-4 py-4 text-slate-600 dark:border-zinc-900 dark:text-zinc-400">
                   {summary.current?.reason ?? "No monthly reason logged yet."}
                 </td>
-                <td className="border-b border-zinc-900 px-4 py-4">
-                  <ButtonLink href={`/admin/teachers/${summary.teacher.id}`} variant="ghost">
+                <td className="border-b border-slate-100 px-4 py-4 dark:border-zinc-900">
+                  <ButtonLink href={`/dashboard/admin/teacher-assign/teachers/${summary.teacher.id}`} variant="ghost">
                     Open
                   </ButtonLink>
                 </td>

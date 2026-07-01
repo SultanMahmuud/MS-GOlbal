@@ -58,6 +58,7 @@ export function StudentParentPortal({
   const [selectedPlanId, setSelectedPlanId] = useState(plans[0]?.id ?? "");
   const [complaintTarget, setComplaintTarget] = useState("selected-plan");
   const [complaint, setComplaint] = useState("");
+  const [weeklyFeedback, setWeeklyFeedback] = useState("");
   const [notice, setNotice] = useState("");
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.id === selectedPlanId) ?? plans[0],
@@ -88,6 +89,18 @@ export function StudentParentPortal({
 
     setNotice(`Complaint submitted for ${target}. Admin will see this in the issue queue.`);
     setComplaint("");
+  }
+
+  function submitWeeklyFeedback() {
+    if (!weeklyFeedback.trim()) {
+      setNotice("Please write this week's feedback before submitting.");
+      return;
+    }
+
+    setNotice(
+      `Weekly feedback submitted for ${selectedTeacher?.name ?? "teacher"}. Admin can use it in teacher health review.`,
+    );
+    setWeeklyFeedback("");
   }
 
   if (!selectedPlan) {
@@ -284,6 +297,31 @@ export function StudentParentPortal({
                 <Button type="button" variant="secondary" onClick={submitComplaint}>
                   <Send className="h-4 w-4" />
                   Submit complaint
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader title="Weekly feedback" eyebrow="Teacher health signal" />
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-slate-500 dark:text-zinc-400">
+                  Share a short weekly note about class quality, timing, teacher
+                  support, or progress. This helps admin review teacher health.
+                </p>
+                <div>
+                  <FieldLabel htmlFor="weekly-feedback">Feedback for this week</FieldLabel>
+                  <TextArea
+                    id="weekly-feedback"
+                    value={weeklyFeedback}
+                    onChange={(event) => setWeeklyFeedback(event.target.value)}
+                    placeholder="Example: Teacher joined on time and corrected recitation clearly."
+                  />
+                </div>
+                <Button type="button" variant="secondary" onClick={submitWeeklyFeedback}>
+                  <Send className="h-4 w-4" />
+                  Submit weekly feedback
                 </Button>
               </div>
             </CardContent>

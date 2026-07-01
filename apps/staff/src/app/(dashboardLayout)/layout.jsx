@@ -15,8 +15,8 @@ const Dashboard = ({ children }) => {
       <SidebarInset>
         <div className="w-full">
           
-          <div className="bg-[#F5F5F5] h-auto min-h-[100vh] p-5">
-            <SidebarTrigger  className="bg-primary text-white"/>
+          <div className="h-auto min-h-[100vh] bg-slate-100 p-5 text-slate-950 dark:bg-zinc-950 dark:text-zinc-100">
+            <SidebarTrigger className="bg-primary text-white dark:bg-emerald-500 dark:text-emerald-950"/>
             {children}
           </div>
         </div>

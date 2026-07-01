@@ -1,5 +1,5 @@
-import { TeacherOpsImportPage } from "@/features/teacher-ops/pages/import-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <TeacherOpsImportPage />;
+  redirect("/dashboard/admin/teacher-assign/import");
 }

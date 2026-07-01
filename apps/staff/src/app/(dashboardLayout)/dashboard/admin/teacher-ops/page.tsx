@@ -1,5 +1,5 @@
-import { TeacherOpsAdminDashboard } from "@/features/teacher-ops/pages/admin-dashboard";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <TeacherOpsAdminDashboard />;
+  redirect("/dashboard/admin/teacher-assign");
 }

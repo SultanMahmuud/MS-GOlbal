@@ -57,7 +57,11 @@ export function NavMain({
                     <SidebarMenuButton
                       asChild
                       tooltip={item.title}
-                      className={`w-full ${isParentActive ? "bg-green-300" : ""} hover:bg-none`}
+                      className={`w-full text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-zinc-200 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 ${
+                        isParentActive
+                          ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
+                          : ""
+                      }`}
                     >
                       <div className="flex items-center gap-3 w-full text-[18px] font-medium">
                         {item.icon && <item.icon className="shrink-0" />}
@@ -81,7 +85,11 @@ export function NavMain({
                             <Link href={subItem.url} passHref>
                               <SidebarMenuSubButton
                                 asChild
-                                className={`${isSubActive ? "bg-green-100" : ""} hover:bg-none`}
+                                className={`text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 ${
+                                  isSubActive
+                                    ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
+                                    : ""
+                                }`}
                               >
                                 <span className="">{subItem.title}</span>
                               </SidebarMenuSubButton>

@@ -6,6 +6,7 @@ import type {
   CurriculumModule,
   DemoUser,
   Issue,
+  LeaveRequest,
   Lesson,
   MonthlyStudentSnapshot,
   ProgressRecord,
@@ -13,6 +14,10 @@ import type {
   Student,
   StudentCoursePlan,
   Teacher,
+  TeacherFinancialSummary,
+  TeacherHealthBreakdown,
+  TeacherLeaveSummary,
+  TeacherSalaryBreakdown,
   TeacherMonthlyAssignmentSnapshot,
   TeacherMonthlySummary,
 } from "./types";
@@ -27,6 +32,24 @@ const dayNames: Record<string, string> = {
   Fri: "Friday",
 };
 
+const currentMonthAnchor = new Date(2026, 6, 1);
+const dayIndexByName: Record<string, number> = {
+  Sunday: 0,
+  Sun: 0,
+  Monday: 1,
+  Mon: 1,
+  Tuesday: 2,
+  Tue: 2,
+  Wednesday: 3,
+  Wed: 3,
+  Thursday: 4,
+  Thu: 4,
+  Friday: 5,
+  Fri: 5,
+  Saturday: 6,
+  Sat: 6,
+};
+
 function dayName(day: string) {
   return dayNames[day] ?? day;
 }
@@ -39,6 +62,8 @@ export const primaryTeacher: Teacher = {
   status: "needs_attention",
   salaryType: "monthly",
   baseSalary: 36000,
+  hourlySalaryRate: 1700,
+  joiningDate: "2026-01-01",
   totalClassHours: 135.3,
   totalMissedClasses: 3,
   activeStudents: 8,
@@ -56,6 +81,8 @@ export const teachers: Teacher[] = [
     status: "active",
     salaryType: "class_based",
     baseSalary: 28000,
+    hourlySalaryRate: 1800,
+    joiningDate: "2026-01-15",
     totalClassHours: 91.8,
     totalMissedClasses: 1,
     activeStudents: 11,
@@ -70,6 +97,8 @@ export const teachers: Teacher[] = [
     status: "active",
     salaryType: "monthly",
     baseSalary: 32000,
+    hourlySalaryRate: 2000,
+    joiningDate: "2026-01-10",
     totalClassHours: 118.4,
     totalMissedClasses: 0,
     activeStudents: 14,
@@ -297,12 +326,14 @@ export const courses: Course[] = [
     name: "Quran Recitation and Hifz",
     description: "Qaida, recitation, para revision, memorization, and daily dua.",
     department: "Quran / Qaida",
+    coverImage: "",
   },
   {
     id: "COURSE-ARABIC",
     name: "Arabic Language",
     description: "Reading, vocabulary, sentence practice, and conversation basics.",
     department: "Arabic",
+    coverImage: "",
   },
 ];
 
@@ -835,16 +866,59 @@ export const leaves = [
   {
     id: "lv-1",
     teacherId: "TID2511",
-    date: "2026-06-26",
+    date: "2026-05-08",
+    fromDate: "2026-05-08",
+    toDate: "2026-05-08",
+    daysCount: 1,
+    requestType: "leave" as const,
     reason: "Family commitment",
-    status: "pending" as const,
+    note: "Approved one-day family leave.",
+    status: "approved" as const,
+    adminDecisionNote: "Approved because class was rescheduled.",
+    approvedBy: "admin",
+    approvedAt: "2026-05-07",
   },
   {
     id: "lv-2",
+    teacherId: "TID2511",
+    date: "2026-06-26",
+    fromDate: "2026-06-26",
+    toDate: "2026-06-26",
+    daysCount: 1,
+    requestType: "leave" as const,
+    reason: "Family commitment",
+    note: "Needs admin decision.",
+    status: "pending" as const,
+  },
+  {
+    id: "lv-3",
     teacherId: "TID2512",
     date: "2026-06-27",
+    fromDate: "2026-06-27",
+    toDate: "2026-06-28",
+    daysCount: 2,
+    requestType: "leave" as const,
     reason: "Medical appointment",
+    note: "Two-day approved medical leave.",
     status: "approved" as const,
+    adminDecisionNote: "Approved with class handover.",
+    approvedBy: "admin",
+    approvedAt: "2026-06-25",
+  },
+  {
+    id: "lv-4",
+    teacherId: "TID2513",
+    date: "2026-06-18",
+    fromDate: "2026-06-18",
+    toDate: "2026-06-18",
+    daysCount: 1,
+    requestType: "late_join" as const,
+    reason: "Internet outage",
+    note: "Joined 10 minutes late and made up the time.",
+    status: "rejected" as const,
+    adminDecisionNote: "Marked as late join, not leave.",
+    approvedBy: "admin",
+    approvedAt: "2026-06-19",
   },
 ];
 
@@ -984,6 +1058,257 @@ export function getTeacherMonthlySummaries() {
   return teachers.map((teacher) => getTeacherMonthlySummary(teacher.id));
 }
 
+function startOfMonth(month = currentMonthAnchor) {
+  return new Date(month.getFullYear(), month.getMonth(), 1);
+}
+
+function endOfMonth(month = currentMonthAnchor) {
+  return new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59, 999);
+}
+
+function previousMonth(month = currentMonthAnchor) {
+  return new Date(month.getFullYear(), month.getMonth() - 1, 1);
+}
+
+function parseLocalDate(value?: string) {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isSameMonth(value: string | undefined, month = currentMonthAnchor) {
+  const date = parseLocalDate(value);
+  return Boolean(date && date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth());
+}
+
+function monthsBetweenInclusive(from: Date, to: Date) {
+  const start = startOfMonth(from);
+  const end = startOfMonth(to);
+  if (end < start) return 0;
+  return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+}
+
+function addMonths(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function getPlanStartDate(plan: StudentCoursePlan) {
+  return (
+    parseLocalDate(plan.startDate) ||
+    parseLocalDate(getStudent(plan.studentId).classStartDate) ||
+    parseLocalDate(getTeacher(plan.teacherId).joiningDate) ||
+    currentMonthAnchor
+  );
+}
+
+function getPlanEndDate(plan: StudentCoursePlan) {
+  return parseLocalDate(plan.endDate) || currentMonthAnchor;
+}
+
+function isPlanActiveInMonth(plan: StudentCoursePlan, month = currentMonthAnchor) {
+  const start = getPlanStartDate(plan);
+  const end = parseLocalDate(plan.endDate);
+  return start <= endOfMonth(month) && (!end || end >= startOfMonth(month));
+}
+
+function getPlanMonthlyFee(plan: StudentCoursePlan) {
+  return plan.monthlyFee ?? getStudent(plan.studentId).monthlyFee ?? 0;
+}
+
+function getPlanHourlyRate(plan: StudentCoursePlan) {
+  return plan.teacherHourlyRate ?? getTeacher(plan.teacherId).hourlySalaryRate ?? getTeacher(plan.teacherId).baseSalary ?? 0;
+}
+
+export function getScheduledClassMinutesForMonth({
+  days,
+  durationMinutes,
+  month = currentMonthAnchor,
+}: {
+  days: string[];
+  durationMinutes: number;
+  month?: Date;
+}) {
+  const wantedDays = new Set(days.map((day) => dayIndexByName[day]).filter((day) => day !== undefined));
+  if (!wantedDays.size || !durationMinutes) return 0;
+
+  let occurrences = 0;
+  const cursor = startOfMonth(month);
+  const lastDay = endOfMonth(month).getDate();
+
+  for (let day = 1; day <= lastDay; day += 1) {
+    cursor.setDate(day);
+    if (wantedDays.has(cursor.getDay())) occurrences += 1;
+  }
+
+  return occurrences * durationMinutes;
+}
+
+function salaryFromMinutes(totalMinutes: number, teacherHourlyRate: number) {
+  const classHours = totalMinutes / 60;
+  const salaryUnit = classHours / 25;
+  return {
+    classHours,
+    salaryUnit,
+    payableSalary: salaryUnit * teacherHourlyRate,
+  };
+}
+
+export function getTeacherCurrentStudentBilling(teacherId: string, month = currentMonthAnchor) {
+  return getTeacherCoursePlans(teacherId)
+    .filter((plan) => isPlanActiveInMonth(plan, month) && getStudent(plan.studentId).status === "active")
+    .reduce((sum, plan) => sum + getPlanMonthlyFee(plan), 0);
+}
+
+export function getTeacherLifetimeStudentBilling(teacherId: string, month = currentMonthAnchor) {
+  return getTeacherCoursePlans(teacherId).reduce((sum, plan) => {
+    const start = getPlanStartDate(plan);
+    const end = getPlanEndDate(plan) > month ? month : getPlanEndDate(plan);
+    return sum + getPlanMonthlyFee(plan) * monthsBetweenInclusive(start, end);
+  }, 0);
+}
+
+export function getTeacherSalaryBreakdown(teacherId: string, month = currentMonthAnchor): TeacherSalaryBreakdown {
+  const teacher = getTeacher(teacherId);
+  const completedSessions = sessions.filter(
+    (session) =>
+      session.teacherId === teacherId &&
+      session.status === "completed" &&
+      isSameMonth(session.date, month),
+  );
+
+  if (completedSessions.length) {
+    const totalMinutes = completedSessions.reduce((sum, session) => sum + session.durationMinutes, 0);
+    const teacherHourlyRate = teacher.hourlySalaryRate || teacher.baseSalary || 0;
+    const salary = salaryFromMinutes(totalMinutes, teacherHourlyRate);
+    return {
+      totalMinutes,
+      classHours: salary.classHours,
+      salaryUnit: salary.salaryUnit,
+      teacherHourlyRate,
+      payableSalary: salary.payableSalary,
+      source: "actual_sessions",
+    };
+  }
+
+  const activePlans = getTeacherCoursePlans(teacherId).filter((plan) => isPlanActiveInMonth(plan, month));
+  const planBreakdowns = activePlans.map((plan) => {
+    const totalMinutes = getScheduledClassMinutesForMonth({
+      days: plan.weeklyDays,
+      durationMinutes: plan.durationMinutes,
+      month,
+    });
+    const rate = getPlanHourlyRate(plan);
+    const salary = salaryFromMinutes(totalMinutes, rate);
+    return { totalMinutes, rate, payableSalary: salary.payableSalary };
+  });
+  const totalMinutes = planBreakdowns.reduce((sum, item) => sum + item.totalMinutes, 0);
+  const payableSalary = planBreakdowns.reduce((sum, item) => sum + item.payableSalary, 0);
+  const salary = salaryFromMinutes(totalMinutes, totalMinutes ? (payableSalary * 25) / (totalMinutes / 60) : teacher.hourlySalaryRate);
+
+  return {
+    totalMinutes,
+    classHours: salary.classHours,
+    salaryUnit: salary.salaryUnit,
+    teacherHourlyRate: totalMinutes ? (payableSalary * 25) / (totalMinutes / 60) : teacher.hourlySalaryRate,
+    payableSalary,
+    source: "assigned_schedule",
+  };
+}
+
+export function getTeacherCurrentSalary(teacherId: string, month = currentMonthAnchor) {
+  return getTeacherSalaryBreakdown(teacherId, month).payableSalary;
+}
+
+export function getTeacherLifetimeSalary(teacherId: string, month = currentMonthAnchor) {
+  const teacher = getTeacher(teacherId);
+  const joiningDate = parseLocalDate(teacher.joiningDate) || currentMonthAnchor;
+  const months = monthsBetweenInclusive(joiningDate, month);
+  return Array.from({ length: months }, (_, index) => addMonths(joiningDate, index)).reduce(
+    (sum, monthCursor) => sum + getTeacherCurrentSalary(teacherId, monthCursor),
+    0,
+  );
+}
+
+export function getTeacherFinancialSummary(teacherId: string, month = currentMonthAnchor): TeacherFinancialSummary {
+  const lastMonth = previousMonth(month);
+  const salaryBreakdown = getTeacherSalaryBreakdown(teacherId, month);
+  return {
+    currentStudentBilling: getTeacherCurrentStudentBilling(teacherId, month),
+    lifetimeStudentBilling: getTeacherLifetimeStudentBilling(teacherId, month),
+    currentSalary: salaryBreakdown.payableSalary,
+    lastMonthSalary: getTeacherCurrentSalary(teacherId, lastMonth),
+    lifetimeSalary: getTeacherLifetimeSalary(teacherId, month),
+    salaryBreakdown,
+  };
+}
+
+export function getTeacherLeaveSummary(
+  teacherId: string,
+  month = currentMonthAnchor,
+  sourceLeaves: LeaveRequest[] = leaves,
+): TeacherLeaveSummary {
+  const teacherLeaves = sourceLeaves.filter((leave) => leave.teacherId === teacherId);
+  const approvedLeaves = teacherLeaves.filter((leave) => leave.status === "approved");
+  const pending = teacherLeaves.filter((leave) => leave.status === "pending");
+  const lastApproved = [...approvedLeaves].sort(
+    (current, next) => Date.parse(next.toDate || next.fromDate) - Date.parse(current.toDate || current.fromDate),
+  )[0];
+  const lastMonth = previousMonth(month);
+  const lastMonthLeave = approvedLeaves
+    .filter((leave) => isSameMonth(leave.fromDate, lastMonth) || isSameMonth(leave.toDate, lastMonth))
+    .reduce((sum, leave) => sum + leave.daysCount, 0);
+  const totalLeave = approvedLeaves.reduce((sum, leave) => sum + leave.daysCount, 0);
+
+  return {
+    lastLeave: lastApproved?.toDate || lastApproved?.fromDate || getTeacher(teacherId).lastLeaveDate,
+    lastMonthLeave,
+    totalLeave,
+    pending,
+  };
+}
+
+export function getAllTeacherStudents() {
+  const seen = new Map<string, Student>();
+  teachers.forEach((teacher) => {
+    getTeacherStudents(teacher.id).forEach((student) => {
+      seen.set(student.id, student);
+    });
+  });
+  return Array.from(seen.values());
+}
+
+export function getAllTeacherProgress() {
+  const studentIds = new Set(getAllTeacherStudents().map((student) => student.id));
+  return progress.filter((record) => studentIds.has(record.studentId));
+}
+
+export function getTeacherStudentTrend(teacherId: string): MonthlyStudentSnapshot[] {
+  return getTeacherMonthlySnapshots(teacherId).map((snapshot) => ({
+    month: snapshot.month.slice(0, 3),
+    count: snapshot.activeStudents,
+    reason: snapshot.reason,
+  }));
+}
+
+export function getAllTeacherStudentTrend(): MonthlyStudentSnapshot[] {
+  const summaries = getTeacherMonthlySummaries();
+  const monthOrder = Array.from(
+    new Set(summaries.flatMap((summary) => summary.snapshots.map((snapshot) => snapshot.month))),
+  );
+
+  return monthOrder.map((month) => {
+    const snapshots = summaries
+      .map((summary) => summary.snapshots.find((snapshot) => snapshot.month === month))
+      .filter(Boolean) as TeacherMonthlyAssignmentSnapshot[];
+    const count = snapshots.reduce((sum, snapshot) => sum + snapshot.activeStudents, 0);
+    return {
+      month: month.slice(0, 3),
+      count,
+      reason: `${snapshots.length} teacher${snapshots.length === 1 ? "" : "s"} reported this month.`,
+    };
+  });
+}
+
 export function getPrimaryClassLink(studentId: string) {
   return getStudentCoursePlans(studentId)[0]?.classLink ?? "Class link not assigned";
 }
@@ -1020,14 +1345,50 @@ export function attentionItems() {
   ];
 }
 
-export function teacherHealthScore(teacher: Teacher) {
+export function teacherHealthBreakdown(teacher: Teacher): TeacherHealthBreakdown {
   const openIssues = getTeacherIssues(teacher.id).filter((issue) => issue.status !== "resolved").length;
+  const teacherIssues = getTeacherIssues(teacher.id);
   const progressGaps = sessions.filter(
     (session) => session.teacherId === teacher.id && !session.progressUpdated,
   ).length;
-  const missedPenalty = teacher.totalMissedClasses * 8;
-  const issuePenalty = openIssues * 7;
-  const progressPenalty = progressGaps * 5;
+  const teacherSessions = sessions.filter((session) => session.teacherId === teacher.id);
+  const missedSessions = teacherSessions.filter((session) => session.status === "missed").length;
+  const lateJoins = teacherIssues.filter((issue) => issue.type === "late_join").length;
+  const complaintIssues = teacherIssues.filter((issue) =>
+    ["student_complaint", "teacher_complaint", "admin_support"].includes(issue.type),
+  ).length;
+  const feedbackMissing = Math.max(0, Math.ceil(getTeacherStudents(teacher.id).length / 4) - 1);
 
-  return Math.max(0, Math.min(100, 100 - missedPenalty - issuePenalty - progressPenalty));
+  const classReliability = Math.max(0, 30 - teacher.totalMissedClasses * 6 - missedSessions * 4 - lateJoins * 2);
+  const attendanceUpdate = Math.max(0, 20 - progressGaps * 4);
+  const progressDiscipline = Math.max(0, 15 - progressGaps * 3);
+  const weeklyFeedback = Math.max(0, 15 - feedbackMissing * 3);
+  const complaintQuality = Math.max(0, 20 - openIssues * 4 - complaintIssues * 3);
+  const score = Math.round(
+    classReliability + attendanceUpdate + progressDiscipline + weeklyFeedback + complaintQuality,
+  );
+
+  return {
+    score: Math.max(0, Math.min(100, score)),
+    classReliability,
+    attendanceUpdate,
+    progressDiscipline,
+    weeklyFeedback,
+    complaintQuality,
+    missedClasses: teacher.totalMissedClasses + missedSessions,
+    openIssues,
+    progressGaps,
+    lateJoins,
+    feedbackMissing,
+  };
+}
+
+export function teacherHealthScore(teacher: Teacher) {
+  return teacherHealthBreakdown(teacher).score;
+}
+
+export function averageTeacherHealthScore() {
+  if (!teachers.length) return 0;
+  const total = teachers.reduce((sum, teacher) => sum + teacherHealthScore(teacher), 0);
+  return Math.round(total / teachers.length);
 }
