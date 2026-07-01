@@ -25,7 +25,7 @@ import { PiStudent } from "react-icons/pi";
 import { MdLeaderboard, MdPayment } from "react-icons/md";
 import { BiCategory, BiComment } from "react-icons/bi";
 import { FaQuestion } from "react-icons/fa";
-import {  useMemo, } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -65,15 +65,15 @@ const baseData = {
       roles: ["admin"],
     },
     {
-      title: "Teacher Ops",
-      url: "/dashboard/admin/teacher-ops",
+      title: "Teacher Assign",
+      url: "/dashboard/admin/teacher-assign",
       icon: ClipboardList,
       roles: ["admin"],
       items: [
-        { title: "Overview", url: "/dashboard/admin/teacher-ops" },
-        { title: "Teacher Profile", url: "/dashboard/admin/teacher-ops/teachers/TID2511" },
-        { title: "Curriculum", url: "/dashboard/admin/teacher-ops/curriculum" },
-        { title: "Import Sheet", url: "/dashboard/admin/teacher-ops/import" },
+        { title: "Overview", url: "/dashboard/admin/teacher-assign" },
+        { title: "Teacher Profile", url: "/dashboard/admin/teacher-assign/teachers/TID2511" },
+        { title: "Curriculum Management", url: "/dashboard/admin/curriculum-management" },
+        { title: "Import Sheet", url: "/dashboard/admin/teacher-assign/import" },
       ],
     },
 
@@ -205,12 +205,14 @@ const baseData = {
 
 export   function AppSidebar() {
 
-  const userInfo = getUserInfo();
+  const [role, setRole] = useState<string | undefined>(undefined);
 
-  const role = userInfo?.role;
+  useEffect(() => {
+    setRole(getUserInfo()?.role);
+  }, []);
 
   const filteredNav = useMemo(() => {
-    return baseData.navMain.filter((item) => item.roles.includes(role));
+    return baseData.navMain.filter((item) => item.roles.includes(role || ""));
   }, [role]);
 const dispatch = useDispatch();
   const router = useRouter();
@@ -221,7 +223,7 @@ const dispatch = useDispatch();
   };
 
   return (
-  <div className="bg-red-400">
+  <div>
       <Sidebar collapsible="icon">
       <SidebarHeader className="flex items-center  max-w-full">
         <Link href="/" className="text-2xl font-bold"><Image src={logo} width={150} height={100} alt="logo" /></Link>

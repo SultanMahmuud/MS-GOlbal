@@ -45,7 +45,7 @@ export const getApiBaseUrl = () =>
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   process.env.NEXT_PUBLIC_BaseApi ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "";
+  (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8080" : "");
 
 export const getBrandHeaders = () => ({
   "X-App-Kind": getAppKind(),

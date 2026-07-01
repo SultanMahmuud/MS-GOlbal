@@ -1,5 +1,9 @@
 export const envConfig = {
-    baseApi: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_BaseApi || process.env.NEXT_PUBLIC_API_URL,
+    baseApi:
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        process.env.NEXT_PUBLIC_BaseApi ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8080" : ""),
     baseUrl: process.env.NEXT_PUBLIC_BaseUrl,
     appKind: process.env.NEXT_PUBLIC_APP_KIND || "legacy",
     brandKey: process.env.NEXT_PUBLIC_BRAND_KEY || "muslim-school",

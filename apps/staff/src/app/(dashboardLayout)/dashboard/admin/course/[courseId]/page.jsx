@@ -7,6 +7,7 @@ import CommonFileUpload from "@/components/Shared/FileUpload/CommonFileUpload";
 import TeacherAddBox from "@/components/AdminDashboard/AdminCourse/TeacherAddBox";
 import { useRouter } from "next/navigation";
 import Topcolumn  from "@/components/AdminDashboard/AdminCourse/UpdateCourse/Topcolumn"
+import CourseCurriculumSelector from "@/components/AdminDashboard/AdminCourse/CourseCurriculumSelector";
 const UpdateCourse = ({ params }) => {
   const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -19,6 +20,7 @@ const UpdateCourse = ({ params }) => {
 
   const [courseDesc, setCourseDesc] = useState("");
   const [curriculum, setCurriculum] = useState([]);
+  const [curriculumId, setCurriculumId] = useState("");
   const [faq, setFaq] = useState([]);
   const [pay, setPay] = useState([]);
   const [announcement, setAnnouncement] = useState("");
@@ -135,6 +137,7 @@ const UpdateCourse = ({ params }) => {
             setengTitle(data.engTitle || "");
             setCourseDesc(data.description || "");
             setCurriculum(data.curriculum || []);
+            setCurriculumId(data.curriculumId || "");
             setFaq(data.FAQ || []);
             setPay(data.pay || []);
             setAnnouncement(data.announcement || "");
@@ -317,6 +320,7 @@ const UpdateCourse = ({ params }) => {
       salePrice: salePrice,
       price: price,
       description: courseDesc,
+      curriculumId: curriculumId || undefined,
       curriculum: curriculum,
       FAQ: faq,
       pay: pay,
@@ -404,6 +408,12 @@ const UpdateCourse = ({ params }) => {
       <div className="max-w-6xl mx-auto">
         <h3 className="text-2xl p-5 font-semibold">Create Course</h3>
         <div className="flex flex-col">
+          <div className="lg:w-3xl xl:w-[90%] mx-auto lg:m-6">
+            <CourseCurriculumSelector
+              selectedCurriculumId={curriculumId}
+              setSelectedCurriculumId={setCurriculumId}
+            />
+          </div>
           <Topcolumn
             inputStyles={inputStyles}
             cardStyles={cardStyles}

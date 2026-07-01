@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarPlus,
   CheckCircle2,
@@ -15,6 +15,7 @@ import { FieldLabel, TextInput } from "@/features/teacher-ops/components/ui/fiel
 import { ScheduleGrid } from "@/features/teacher-ops/components/schedule-grid";
 import { addMinutes } from "@/features/teacher-ops/lib/data";
 import type { Course, ScheduleBooking, Student, Teacher } from "@/features/teacher-ops/lib/types";
+import { getApiBaseUrl, getBrandHeaders } from "@/lib/brand-config";
 
 const days = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 const dayNames: Record<string, string> = {
@@ -25,6 +26,33 @@ const dayNames: Record<string, string> = {
   Wed: "Wednesday",
   Thu: "Thursday",
   Fri: "Friday",
+};
+
+type CurriculumOption = {
+  _id: string;
+  title: string;
+  status: string;
+  semesters?: Array<{
+    _id?: string;
+    title: string;
+    modules?: Array<{
+      _id?: string;
+      title: string;
+      items?: Array<{
+        _id?: string;
+        title: string;
+        type: string;
+      }>;
+    }>;
+  }>;
+};
+
+const isMongoId = (value: string) => /^[a-f\d]{24}$/i.test(value);
+
+const getAuthHeaders = () => {
+  if (typeof window === "undefined") return {};
+  const token = window.localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 function slotRange(start: string, duration: number) {
@@ -97,6 +125,11 @@ export function AdminAssignmentStudio({
   const [monthlyFee, setMonthlyFee] = useState(2500);
   const [classLink, setClassLink] = useState("https://meet.google.com/new-class-demo");
   const [selectedCourses, setSelectedCourses] = useState<string[]>(["COURSE-QURAN"]);
+  const [curriculums, setCurriculums] = useState<CurriculumOption[]>([]);
+  const [selectedCurriculumId, setSelectedCurriculumId] = useState("");
+  const [selectedSemesterId, setSelectedSemesterId] = useState("");
+  const [selectedModuleId, setSelectedModuleId] = useState("");
+  const [selectedItemId, setSelectedItemId] = useState("");
   const [savedBookings, setSavedBookings] = useState<ScheduleBooking[]>([]);
   const [savedMessage, setSavedMessage] = useState("");
 
@@ -124,6 +157,37 @@ export function AdminAssignmentStudio({
     [existingBookings, previewBookings],
   );
   const conflictCount = previewBookings.filter((booking) => booking.status === "conflict").length;
+  const selectedCurriculum = curriculums.find((item) => item._id === selectedCurriculumId);
+  const selectedSemester = selectedCurriculum?.semesters?.find((item) => item._id === selectedSemesterId);
+  const selectedModule = selectedSemester?.modules?.find((item) => item._id === selectedModuleId);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCurriculums() {
+      try {
+        const response = await fetch(`${getApiBaseUrl()}/curriculums?status=all`, {
+          headers: { ...getBrandHeaders(), ...getAuthHeaders() },
+          cache: "no-store",
+        });
+        const body = await response.json();
+        const data = body?.data || [];
+        if (!isMounted) return;
+        setCurriculums(data);
+        setSelectedCurriculumId(data[0]?._id || "");
+        setSelectedSemesterId(data[0]?.semesters?.[0]?._id || "");
+        setSelectedModuleId(data[0]?.semesters?.[0]?.modules?.[0]?._id || "");
+        setSelectedItemId(data[0]?.semesters?.[0]?.modules?.[0]?.items?.[0]?._id || "");
+      } catch {
+        if (isMounted) setCurriculums([]);
+      }
+    }
+
+    loadCurriculums();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function toggleDay(day: string) {
     setSelectedDays((current) =>
@@ -141,15 +205,39 @@ export function AdminAssignmentStudio({
     );
   }
 
-  function saveAssignment() {
+  async function saveAssignment() {
     if (!selectedDays.length || !selectedCourses.length || conflictCount > 0) {
       setSavedMessage("Fix the selected days, courses, or schedule conflict before assigning.");
       return;
     }
 
     setSavedBookings((current) => [...current, ...previewBookings]);
+    if (selectedCurriculumId) {
+      await fetch(`${getApiBaseUrl()}/teacher-assignments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getBrandHeaders(),
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          curriculumId: selectedCurriculumId,
+          teacherId: isMongoId(teacherId) ? teacherId : undefined,
+          studentIds: isMongoId(studentId) ? [studentId] : [],
+          assignedTo: "teacherClassPlan",
+          selectedSemesterId,
+          selectedModuleId,
+          selectedItemId,
+          startDate: new Date().toISOString(),
+          teacherClassPlanId: `${teacherId}-${studentId}-${Date.now()}`,
+          teacherNote: `Class link: ${classLink}`,
+        }),
+      }).catch(() => null);
+    }
     setSavedMessage(
-      `${student.name} assigned to ${teacher.name}. ${selectedDays.length} weekly class days booked.`,
+      `${student.name} assigned to ${teacher.name}. ${selectedDays.length} weekly class days booked.${
+        selectedCurriculum ? ` Curriculum: ${selectedCurriculum.title}.` : ""
+      }`,
     );
     setSelectedDays([]);
   }
@@ -272,6 +360,89 @@ export function AdminAssignmentStudio({
                 <p className="mt-1 text-xs text-zinc-500">{course.description}</p>
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="grid gap-4 rounded-lg border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-2">
+          <div>
+            <FieldLabel htmlFor="curriculum-plan">Central curriculum</FieldLabel>
+            <select
+              id="curriculum-plan"
+              value={selectedCurriculumId}
+              onChange={(event) => {
+                const nextCurriculum = curriculums.find((item) => item._id === event.target.value);
+                setSelectedCurriculumId(event.target.value);
+                setSelectedSemesterId(nextCurriculum?.semesters?.[0]?._id || "");
+                setSelectedModuleId(nextCurriculum?.semesters?.[0]?.modules?.[0]?._id || "");
+                setSelectedItemId(nextCurriculum?.semesters?.[0]?.modules?.[0]?.items?.[0]?._id || "");
+              }}
+              className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 outline-none focus:border-emerald-500"
+            >
+              <option value="">No curriculum selected</option>
+              {curriculums.map((curriculum) => (
+                <option key={curriculum._id} value={curriculum._id}>
+                  {curriculum.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel htmlFor="semester-plan">Semester</FieldLabel>
+            <select
+              id="semester-plan"
+              value={selectedSemesterId}
+              onChange={(event) => {
+                const nextSemester = selectedCurriculum?.semesters?.find(
+                  (item) => item._id === event.target.value,
+                );
+                setSelectedSemesterId(event.target.value);
+                setSelectedModuleId(nextSemester?.modules?.[0]?._id || "");
+                setSelectedItemId(nextSemester?.modules?.[0]?.items?.[0]?._id || "");
+              }}
+              className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 outline-none focus:border-emerald-500"
+            >
+              {(selectedCurriculum?.semesters || []).map((semester) => (
+                <option key={semester._id} value={semester._id}>
+                  {semester.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel htmlFor="module-plan">Module</FieldLabel>
+            <select
+              id="module-plan"
+              value={selectedModuleId}
+              onChange={(event) => {
+                const nextModule = selectedSemester?.modules?.find(
+                  (item) => item._id === event.target.value,
+                );
+                setSelectedModuleId(event.target.value);
+                setSelectedItemId(nextModule?.items?.[0]?._id || "");
+              }}
+              className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 outline-none focus:border-emerald-500"
+            >
+              {(selectedSemester?.modules || []).map((module) => (
+                <option key={module._id} value={module._id}>
+                  {module.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel htmlFor="lesson-plan">Next lesson item</FieldLabel>
+            <select
+              id="lesson-plan"
+              value={selectedItemId}
+              onChange={(event) => setSelectedItemId(event.target.value)}
+              className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-100 outline-none focus:border-emerald-500"
+            >
+              {(selectedModule?.items || []).map((item) => (
+                <option key={item._id} value={item._id}>
+                  {item.title} ({item.type})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

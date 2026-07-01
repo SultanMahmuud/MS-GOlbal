@@ -1,5 +1,5 @@
 import { CurriculumManagementPage } from "@/features/curriculum-management";
 
-export function TeacherOpsCurriculumPage() {
+export default function Page() {
   return <CurriculumManagementPage />;
 }

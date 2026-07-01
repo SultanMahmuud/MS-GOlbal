@@ -6,6 +6,7 @@ type AuthState = {
   user: {
     _id?: string;
     id?: string; // in case the token has `id`
+    token?: string;
     name?: string;
     email?: string;
     number?: string;
@@ -54,7 +55,7 @@ const authSlice = createSlice({
       const { token, _id, name, email, number, role, brandKey, assignedBrandKeys, isBlock } = action.payload;
 
       state.token = token;
-      state.user = { _id, name, email, number, role, brandKey, assignedBrandKeys, isBlock };
+      state.user = { _id, token, name, email, number, role, brandKey, assignedBrandKeys, isBlock };
       state.isAuthenticated = true;
 
       if (typeof window !== 'undefined') {

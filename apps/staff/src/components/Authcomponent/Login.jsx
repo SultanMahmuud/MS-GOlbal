@@ -81,6 +81,22 @@ try {
       })
     );
 
+    if (typeof window !== "undefined" && response?.token) {
+      const userPayload = {
+        token: response.token,
+        _id: response?._id,
+        name: response?.name,
+        email: response?.email,
+        number: response?.number,
+        role: response?.role,
+        brandKey: response?.brandKey,
+        assignedBrandKeys: response?.assignedBrandKeys,
+        isBlock: response?.isBlock,
+      };
+      window.localStorage.setItem("token", response.token);
+      window.localStorage.setItem("user", JSON.stringify(userPayload));
+    }
+
     toast.success("Login successful!");
     router.push(redirectPath || getDashboardPath(response?.role));
   } catch (error) {

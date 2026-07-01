@@ -9,6 +9,7 @@ import Announcement from "./Announcement";
 import AddCourseFaq from"./AddCourseFaq"
 import TeacherAddBox from "./TeacherAddBox";
 import CommonFileUpload from "@/components/Shared/FileUpload/CommonFileUpload"
+import CourseCurriculumSelector from "./CourseCurriculumSelector";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -19,6 +20,7 @@ const AddCourse = () => {
   const [subtitle, setSubtitle] = useState("");
   const [courseDesc, setCourseDesc] = useState("");
   const [curriculum, setCurriculum] = useState([]);
+  const [curriculumId, setCurriculumId] = useState("");
   const [faq, setFaq] = useState([]);
   const [announcement, setAnnouncement] = useState("");
   const [featuredImage, setFeaturedImage] = useState("");
@@ -164,6 +166,7 @@ const AddCourse = () => {
       salePrice: salePrice,
       price: price,
       description: courseDesc,
+      curriculumId: curriculumId || undefined,
       curriculum: curriculum,
       FAQ: faq,
       rank: courseRank,
@@ -282,10 +285,16 @@ const AddCourse = () => {
                     />
                   }
                   com2={
-                    <CourseCurriculum
-                      curriculum={curriculum}
-                      setCurriculum={setCurriculum}
-                    />
+                    <div>
+                      <CourseCurriculumSelector
+                        selectedCurriculumId={curriculumId}
+                        setSelectedCurriculumId={setCurriculumId}
+                      />
+                      <CourseCurriculum
+                        curriculum={curriculum}
+                        setCurriculum={setCurriculum}
+                      />
+                    </div>
                   }
                   com3={<AddCourseFaq faq={faq} setFaq={setFaq} />}
                   com5={<Announcement setAnnouncement={setAnnouncement} />}

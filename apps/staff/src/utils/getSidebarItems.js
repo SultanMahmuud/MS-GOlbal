@@ -37,15 +37,15 @@ export const baseSidebarItems = [
     roles: ["admin", "teacher"],
   },
   {
-    title: "Teacher Ops",
-    url: "/dashboard/admin/teacher-ops",
+    title: "Teacher Assign",
+    url: "/dashboard/admin/teacher-assign",
     icon: ClipboardList,
     roles: ["admin"],
     items: [
-      { title: "Overview", url: "/dashboard/admin/teacher-ops" },
-      { title: "Teacher Profile", url: "/dashboard/admin/teacher-ops/teachers/TID2511" },
-      { title: "Curriculum", url: "/dashboard/admin/teacher-ops/curriculum" },
-      { title: "Import Sheet", url: "/dashboard/admin/teacher-ops/import" },
+      { title: "Overview", url: "/dashboard/admin/teacher-assign" },
+      { title: "Teacher Profile", url: "/dashboard/admin/teacher-assign/teachers/TID2511" },
+      { title: "Curriculum Management", url: "/dashboard/admin/curriculum-management" },
+      { title: "Import Sheet", url: "/dashboard/admin/teacher-assign/import" },
     ],
   },
   {
