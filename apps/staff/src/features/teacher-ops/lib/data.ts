@@ -1,4 +1,5 @@
 import type {
+  AssignmentSegment,
   AppData,
   AttendanceSummary,
   ClassSession,
@@ -52,6 +53,10 @@ const dayIndexByName: Record<string, number> = {
 
 function dayName(day: string) {
   return dayNames[day] ?? day;
+}
+
+function toIsoDateTime(value: Date) {
+  return value.toISOString();
 }
 
 export const primaryTeacher: Teacher = {
@@ -697,26 +702,28 @@ export function buildScheduleBookings(plansForBooking: StudentCoursePlan[] = stu
 
   return plansForBooking.flatMap((plan) => {
     const student = getStudent(plan.studentId);
+    const activeSegment = getCurrentPlanSegment(plan);
+    if (!activeSegment) return [];
 
-    return plan.weeklyDays.flatMap((day) => {
+    return activeSegment.weeklyDays.flatMap((day) => {
       const fullDay = dayName(day);
 
-      return timeRange(plan.startTime, plan.durationMinutes).map<ScheduleBooking>((time) => {
-        const slotKey = `${plan.teacherId}-${fullDay}-${time}`;
+      return timeRange(activeSegment.startTime, activeSegment.durationMinutes).map<ScheduleBooking>((time) => {
+        const slotKey = `${activeSegment.teacherId}-${fullDay}-${time}`;
         const existingStudentId = seenSlots.get(slotKey);
         const isConflict = Boolean(existingStudentId && existingStudentId !== student.id);
         seenSlots.set(slotKey, student.id);
 
         return {
-          id: `${plan.teacherId}-${plan.id}-${fullDay}-${time}`,
-          teacherId: plan.teacherId,
+          id: `${activeSegment.teacherId}-${activeSegment.id}-${fullDay}-${time}`,
+          teacherId: activeSegment.teacherId,
           day: fullDay,
           time,
           status: isConflict ? "conflict" : "booked",
           studentId: student.id,
           studentName: student.name,
-          durationMinutes: plan.durationMinutes,
-          classLink: plan.classLink,
+          durationMinutes: activeSegment.durationMinutes,
+          classLink: activeSegment.classLink,
         };
       });
     });
@@ -958,7 +965,7 @@ export function getTeacher(id: string) {
 export function getTeacherStudents(teacherId: string) {
   const studentIds = new Set(
     studentCoursePlans
-      .filter((plan) => plan.teacherId === teacherId)
+      .filter((plan) => getPlanSegments(plan).some((segment) => segment.teacherId === teacherId))
       .map((plan) => plan.studentId),
   );
   return students.filter((student) => studentIds.has(student.id));
@@ -982,7 +989,11 @@ export function getStudentTeacher(studentId: string) {
 }
 
 export function getStudentTeachers(studentId: string) {
-  const teacherIds = new Set(getStudentCoursePlans(studentId).map((plan) => plan.teacherId));
+  const teacherIds = new Set(
+    getStudentCoursePlans(studentId).flatMap((plan) =>
+      getPlanSegments(plan).map((segment) => segment.teacherId),
+    ),
+  );
   return teachers.filter((teacher) => teacherIds.has(teacher.id));
 }
 
@@ -991,7 +1002,9 @@ export function getStudentCoursePlans(studentId: string) {
 }
 
 export function getTeacherCoursePlans(teacherId: string) {
-  return studentCoursePlans.filter((plan) => plan.teacherId === teacherId);
+  return studentCoursePlans.filter(
+    (plan) => plan.teacherId === teacherId || getPlanSegments(plan).some((segment) => segment.teacherId === teacherId),
+  );
 }
 
 export function getCourse(id: string) {
@@ -1072,8 +1085,20 @@ function previousMonth(month = currentMonthAnchor) {
 
 function parseLocalDate(value?: string) {
   if (!value) return null;
-  const date = new Date(`${value}T00:00:00`);
+  const date = value.includes("T") ? new Date(value) : new Date(`${value}T00:00:00`);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseEffectiveDateTime(value?: string) {
+  if (!value) return null;
+  const date = value.includes("T") ? new Date(value) : new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function dateFromInput(value: Date | string | undefined) {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  return parseEffectiveDateTime(value);
 }
 
 function isSameMonth(value: string | undefined, month = currentMonthAnchor) {
@@ -1092,8 +1117,22 @@ function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
-function getPlanStartDate(plan: StudentCoursePlan) {
+function maxDate(first: Date, second: Date) {
+  return first > second ? first : second;
+}
+
+function minDate(first: Date, second: Date) {
+  return first < second ? first : second;
+}
+
+function classDateTimeFor(day: Date, startTime = "00:00") {
+  const [hour = 0, minute = 0] = startTime.split(":").map(Number);
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, minute, 0, 0);
+}
+
+function fallbackPlanStart(plan: StudentCoursePlan) {
   return (
+    parseEffectiveDateTime(plan.effectiveFrom) ||
     parseLocalDate(plan.startDate) ||
     parseLocalDate(getStudent(plan.studentId).classStartDate) ||
     parseLocalDate(getTeacher(plan.teacherId).joiningDate) ||
@@ -1101,46 +1140,172 @@ function getPlanStartDate(plan: StudentCoursePlan) {
   );
 }
 
+export function getPlanSegments(plan: StudentCoursePlan): AssignmentSegment[] {
+  const fallbackStart = fallbackPlanStart(plan);
+  const fallbackEnd = parseEffectiveDateTime(plan.effectiveTo) || parseLocalDate(plan.endDate) || undefined;
+  const segments = plan.segments?.length
+    ? plan.segments
+    : [
+        {
+          id: `${plan.id}-SEG-INITIAL`,
+          studentId: plan.studentId,
+          teacherId: plan.teacherId,
+          courseId: plan.courseId,
+          classLink: plan.classLink,
+          weeklyDays: plan.weeklyDays,
+          startTime: plan.startTime,
+          durationMinutes: plan.durationMinutes,
+          monthlyFee: plan.monthlyFee,
+          teacherHourlyRate: plan.teacherHourlyRate,
+          effectiveFrom: toIsoDateTime(fallbackStart),
+          effectiveTo: fallbackEnd ? toIsoDateTime(fallbackEnd) : undefined,
+          changeReason: plan.changeReason || "Initial assignment",
+          createdAt: plan.updatedAt || toIsoDateTime(fallbackStart),
+        },
+      ];
+
+  return segments
+    .map((segment, index) => {
+      const start = parseEffectiveDateTime(segment.effectiveFrom) || fallbackStart;
+      const end = parseEffectiveDateTime(segment.effectiveTo);
+
+      return {
+        ...segment,
+        id: segment.id || `${plan.id}-SEG-${index + 1}`,
+        studentId: segment.studentId || plan.studentId,
+        teacherId: segment.teacherId || plan.teacherId,
+        courseId: segment.courseId || plan.courseId,
+        classLink: segment.classLink || plan.classLink,
+        weeklyDays: segment.weeklyDays?.length ? segment.weeklyDays : plan.weeklyDays,
+        startTime: segment.startTime || plan.startTime,
+        durationMinutes: segment.durationMinutes || plan.durationMinutes,
+        monthlyFee: segment.monthlyFee ?? plan.monthlyFee,
+        teacherHourlyRate: segment.teacherHourlyRate ?? plan.teacherHourlyRate,
+        effectiveFrom: toIsoDateTime(start),
+        effectiveTo: end ? toIsoDateTime(end) : undefined,
+        createdAt: segment.createdAt || plan.updatedAt || toIsoDateTime(start),
+      };
+    })
+    .sort((first, second) => {
+      const firstDate = parseEffectiveDateTime(first.effectiveFrom)?.getTime() ?? 0;
+      const secondDate = parseEffectiveDateTime(second.effectiveFrom)?.getTime() ?? 0;
+      return firstDate - secondDate;
+    });
+}
+
+export function getCurrentPlanSegment(plan: StudentCoursePlan, at: Date = currentMonthAnchor) {
+  const segments = getPlanSegments(plan);
+  if (!segments.length) return null;
+
+  const active = segments.find((segment) => {
+    const start = parseEffectiveDateTime(segment.effectiveFrom) || currentMonthAnchor;
+    const end = parseEffectiveDateTime(segment.effectiveTo);
+    return start <= at && (!end || end >= at);
+  });
+  if (active) return active;
+
+  const previous = [...segments]
+    .reverse()
+    .find((segment) => (parseEffectiveDateTime(segment.effectiveFrom) || currentMonthAnchor) <= at);
+  return previous || segments[0];
+}
+
+function segmentOverlapsRange(segment: AssignmentSegment, rangeStart: Date, rangeEnd: Date) {
+  const start = parseEffectiveDateTime(segment.effectiveFrom) || rangeStart;
+  const end = parseEffectiveDateTime(segment.effectiveTo);
+  return start <= rangeEnd && (!end || end >= rangeStart);
+}
+
+function getPlanSegmentsForMonth(plan: StudentCoursePlan, month = currentMonthAnchor, teacherId?: string) {
+  const monthStart = startOfMonth(month);
+  const monthEnd = endOfMonth(month);
+  return getPlanSegments(plan).filter(
+    (segment) =>
+      (!teacherId || segment.teacherId === teacherId) &&
+      segmentOverlapsRange(segment, monthStart, monthEnd),
+  );
+}
+
+function getPlanStartDate(plan: StudentCoursePlan) {
+  return getPlanSegments(plan).reduce((earliest, segment) => {
+    const start = parseEffectiveDateTime(segment.effectiveFrom) || earliest;
+    return start < earliest ? start : earliest;
+  }, fallbackPlanStart(plan));
+}
+
 function getPlanEndDate(plan: StudentCoursePlan) {
-  return parseLocalDate(plan.endDate) || currentMonthAnchor;
+  return getPlanSegments(plan).reduce((latest, segment) => {
+    const end = parseEffectiveDateTime(segment.effectiveTo) || currentMonthAnchor;
+    return end > latest ? end : latest;
+  }, parseEffectiveDateTime(plan.effectiveTo) || parseLocalDate(plan.endDate) || currentMonthAnchor);
 }
 
 function isPlanActiveInMonth(plan: StudentCoursePlan, month = currentMonthAnchor) {
-  const start = getPlanStartDate(plan);
-  const end = parseLocalDate(plan.endDate);
-  return start <= endOfMonth(month) && (!end || end >= startOfMonth(month));
+  return getPlanSegmentsForMonth(plan, month).length > 0;
 }
 
 function getPlanMonthlyFee(plan: StudentCoursePlan) {
-  return plan.monthlyFee ?? getStudent(plan.studentId).monthlyFee ?? 0;
+  const segment = getCurrentPlanSegment(plan);
+  return segment?.monthlyFee ?? plan.monthlyFee ?? getStudent(plan.studentId).monthlyFee ?? 0;
 }
 
 function getPlanHourlyRate(plan: StudentCoursePlan) {
-  return plan.teacherHourlyRate ?? getTeacher(plan.teacherId).hourlySalaryRate ?? getTeacher(plan.teacherId).baseSalary ?? 0;
+  const segment = getCurrentPlanSegment(plan);
+  return segment?.teacherHourlyRate ?? plan.teacherHourlyRate ?? getTeacher(plan.teacherId).hourlySalaryRate ?? getTeacher(plan.teacherId).baseSalary ?? 0;
+}
+
+export function getScheduledClassMinutesForRange({
+  days,
+  durationMinutes,
+  startTime = "00:00",
+  from,
+  to,
+}: {
+  days: string[];
+  durationMinutes: number;
+  startTime?: string;
+  from: Date | string;
+  to: Date | string;
+}) {
+  const wantedDays = new Set(days.map((day) => dayIndexByName[day]).filter((day) => day !== undefined));
+  if (!wantedDays.size || !durationMinutes) return 0;
+
+  const rangeStart = dateFromInput(from);
+  const rangeEnd = dateFromInput(to);
+  if (!rangeStart || !rangeEnd || rangeStart > rangeEnd) return 0;
+
+  let occurrences = 0;
+  const cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate());
+
+  while (cursor <= rangeEnd) {
+    const classAt = classDateTimeFor(cursor, startTime);
+    if (wantedDays.has(cursor.getDay()) && classAt >= rangeStart && classAt <= rangeEnd) {
+      occurrences += 1;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return occurrences * durationMinutes;
 }
 
 export function getScheduledClassMinutesForMonth({
   days,
   durationMinutes,
+  startTime = "00:00",
   month = currentMonthAnchor,
 }: {
   days: string[];
   durationMinutes: number;
+  startTime?: string;
   month?: Date;
 }) {
-  const wantedDays = new Set(days.map((day) => dayIndexByName[day]).filter((day) => day !== undefined));
-  if (!wantedDays.size || !durationMinutes) return 0;
-
-  let occurrences = 0;
-  const cursor = startOfMonth(month);
-  const lastDay = endOfMonth(month).getDate();
-
-  for (let day = 1; day <= lastDay; day += 1) {
-    cursor.setDate(day);
-    if (wantedDays.has(cursor.getDay())) occurrences += 1;
-  }
-
-  return occurrences * durationMinutes;
+  return getScheduledClassMinutesForRange({
+    days,
+    durationMinutes,
+    startTime,
+    from: startOfMonth(month),
+    to: endOfMonth(month),
+  });
 }
 
 function salaryFromMinutes(totalMinutes: number, teacherHourlyRate: number) {
@@ -1155,15 +1320,32 @@ function salaryFromMinutes(totalMinutes: number, teacherHourlyRate: number) {
 
 export function getTeacherCurrentStudentBilling(teacherId: string, month = currentMonthAnchor) {
   return getTeacherCoursePlans(teacherId)
-    .filter((plan) => isPlanActiveInMonth(plan, month) && getStudent(plan.studentId).status === "active")
-    .reduce((sum, plan) => sum + getPlanMonthlyFee(plan), 0);
+    .filter(
+      (plan) =>
+        getPlanSegmentsForMonth(plan, month, teacherId).length > 0 &&
+        getStudent(plan.studentId).status === "active",
+    )
+    .reduce((sum, plan) => {
+      const segments = getPlanSegmentsForMonth(plan, month, teacherId);
+      const latestSegment = segments.at(-1);
+      return sum + (latestSegment?.monthlyFee ?? getPlanMonthlyFee(plan));
+    }, 0);
 }
 
 export function getTeacherLifetimeStudentBilling(teacherId: string, month = currentMonthAnchor) {
   return getTeacherCoursePlans(teacherId).reduce((sum, plan) => {
-    const start = getPlanStartDate(plan);
-    const end = getPlanEndDate(plan) > month ? month : getPlanEndDate(plan);
-    return sum + getPlanMonthlyFee(plan) * monthsBetweenInclusive(start, end);
+    return (
+      sum +
+      getPlanSegments(plan)
+        .filter((segment) => segment.teacherId === teacherId)
+        .reduce((segmentSum, segment) => {
+          const start = parseEffectiveDateTime(segment.effectiveFrom) || getPlanStartDate(plan);
+          const rawEnd = parseEffectiveDateTime(segment.effectiveTo) || month;
+          const end = rawEnd > month ? month : rawEnd;
+          const monthlyFee = segment.monthlyFee ?? getPlanMonthlyFee(plan);
+          return segmentSum + monthlyFee * monthsBetweenInclusive(start, end);
+        }, 0)
+    );
   }, 0);
 }
 
@@ -1190,17 +1372,27 @@ export function getTeacherSalaryBreakdown(teacherId: string, month = currentMont
     };
   }
 
-  const activePlans = getTeacherCoursePlans(teacherId).filter((plan) => isPlanActiveInMonth(plan, month));
-  const planBreakdowns = activePlans.map((plan) => {
-    const totalMinutes = getScheduledClassMinutesForMonth({
-      days: plan.weeklyDays,
-      durationMinutes: plan.durationMinutes,
-      month,
-    });
-    const rate = getPlanHourlyRate(plan);
-    const salary = salaryFromMinutes(totalMinutes, rate);
-    return { totalMinutes, rate, payableSalary: salary.payableSalary };
-  });
+  const monthStart = startOfMonth(month);
+  const monthEnd = endOfMonth(month);
+  const activePlans = getTeacherCoursePlans(teacherId).filter(
+    (plan) => getPlanSegmentsForMonth(plan, month, teacherId).length > 0,
+  );
+  const planBreakdowns = activePlans.flatMap((plan) =>
+    getPlanSegmentsForMonth(plan, month, teacherId).map((segment) => {
+      const segmentStart = parseEffectiveDateTime(segment.effectiveFrom) || monthStart;
+      const segmentEnd = parseEffectiveDateTime(segment.effectiveTo) || monthEnd;
+      const totalMinutes = getScheduledClassMinutesForRange({
+        days: segment.weeklyDays,
+        durationMinutes: segment.durationMinutes,
+        startTime: segment.startTime,
+        from: maxDate(monthStart, segmentStart),
+        to: minDate(monthEnd, segmentEnd),
+      });
+      const rate = segment.teacherHourlyRate ?? getPlanHourlyRate(plan);
+      const salary = salaryFromMinutes(totalMinutes, rate);
+      return { totalMinutes, rate, payableSalary: salary.payableSalary };
+    }),
+  );
   const totalMinutes = planBreakdowns.reduce((sum, item) => sum + item.totalMinutes, 0);
   const payableSalary = planBreakdowns.reduce((sum, item) => sum + item.payableSalary, 0);
   const salary = salaryFromMinutes(totalMinutes, totalMinutes ? (payableSalary * 25) / (totalMinutes / 60) : teacher.hourlySalaryRate);
@@ -1318,7 +1510,10 @@ export function getRoutineLabel(student: Student) {
 }
 
 export function getPlanRoutineLabel(plan: StudentCoursePlan) {
-  return `${plan.weeklyDays.map(dayName).join(", ")} at ${plan.startTime} for ${plan.durationMinutes} min`;
+  const segment = getCurrentPlanSegment(plan);
+  return `${(segment?.weeklyDays || plan.weeklyDays).map(dayName).join(", ")} at ${
+    segment?.startTime || plan.startTime
+  } for ${segment?.durationMinutes || plan.durationMinutes} min`;
 }
 
 export function attentionItems() {

@@ -90,11 +90,30 @@ export type Lesson = {
   estimatedMinutes: number;
 };
 
+export type AssignmentSegment = {
+  id: string;
+  studentId: string;
+  teacherId: string;
+  courseId: string;
+  curriculumId?: string;
+  classLink: string;
+  weeklyDays: string[];
+  startTime: string;
+  durationMinutes: number;
+  monthlyFee?: number;
+  teacherHourlyRate?: number;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  changeReason?: string;
+  createdAt: string;
+};
+
 export type StudentCoursePlan = {
   id: string;
   studentId: string;
   teacherId: string;
   courseId: string;
+  curriculumId?: string;
   classLink: string;
   weeklyDays: string[];
   startTime: string;
@@ -103,6 +122,10 @@ export type StudentCoursePlan = {
   teacherHourlyRate?: number;
   startDate?: string;
   endDate?: string;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+  changeReason?: string;
+  segments?: AssignmentSegment[];
   currentLessonId: string;
   completedLessonIds: string[];
   assignedLessonIds: string[];

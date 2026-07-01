@@ -16,7 +16,9 @@ const getAllTeachers = async () => {
 };
 
 const AwsomeTeachers = async ({ isLoading = false }) => {
-  const teachers = await getAllTeachers();
+  const teachers = (await getAllTeachers()).filter(
+    (teacher) => !teacher.isBlock && teacher.isTeacherProfileActive !== false
+  );
  
 
   return (

@@ -40,7 +40,9 @@ export default function TeachersSection() {
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/role/teacher?limit=all`)
       .then((res) => res.json())
       .then((data) => {
-        const activeTeachers = data?.data?.filter((teacher) => !teacher.isBlock);
+        const activeTeachers = data?.data?.filter(
+          (teacher) => !teacher.isBlock && teacher.isTeacherProfileActive !== false
+        );
         setTeachers(activeTeachers || []);
         setIsLoading(false);
       });

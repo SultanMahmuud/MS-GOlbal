@@ -16,7 +16,15 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { DateConversionWithTime } from '@/utils/DateConversionWithTime';
+import { getApiBaseUrl, getBrandHeaders } from '@/lib/brand-config';
 
+const getAuthHeaders = () => {
+  if (typeof window === 'undefined') return getBrandHeaders();
+  const token = window.localStorage.getItem('token');
+  return token
+    ? { ...getBrandHeaders(), Authorization: `Bearer ${token}` }
+    : getBrandHeaders();
+};
 
 
 
@@ -28,29 +36,31 @@ export default function AdminTable() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/role/admin`)
+    fetch(`${getApiBaseUrl()}/user/role/admin?limit=all`, {
+      headers: getAuthHeaders(),
+      cache: 'no-store',
+    })
       .then((res) => res.json())
       .then((json) => {
-        setData(json.data);
+        setData(Array.isArray(json.data) ? json.data : []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [openLevel]);
 
   const handleDelete = (email) => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/delete`, {
+    fetch(`${getApiBaseUrl()}/user/delete/${email}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      headers: getAuthHeaders(),
     }).then(() => {
       setData((d) => d.filter((u) => u.email !== email));
     });
   };
 
   const handleBlockToggle = (email, current) => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/update`, {
+    fetch(`${getApiBaseUrl()}/user`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ email, isBlock: !current }),
     }).then(() => {
       setData((d) =>

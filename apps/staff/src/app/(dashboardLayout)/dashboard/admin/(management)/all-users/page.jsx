@@ -7,6 +7,7 @@ import { DateConversionWithTime } from "@/utils/DateConversionWithTime"
 import { DataTable } from "@/components/UI/data-table"
 import { getUserInfo } from "@/services/auth.services"
 import AddLevelModalReg from "@/components/AdminDashboard/AdminCourse/RegistrationModal/AddLevelModalReg"
+import { getApiBaseUrl, getBrandHeaders } from "@/lib/brand-config"
 
 const Registration = () => {
   const [registrations, setRegistrations] = useState([])
@@ -22,13 +23,16 @@ const Registration = () => {
 
   // ✅ Refetch function
   const fetchRegistrations = useCallback(() => {
-    if (!user?.token) return
-    const config = { headers: { authorization: `Bearer ${user.token}` } }
+    const config = {
+      headers: user?.token
+        ? { ...getBrandHeaders(), Authorization: `Bearer ${user.token}` }
+        : getBrandHeaders(),
+    }
     setLoading(true)
 
     axios
       .get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/all?limit=${limit}&page=${page}`,
+        `${getApiBaseUrl()}/user/all?limit=${limit}&page=${page}`,
         config
       )
       .then((res) => {

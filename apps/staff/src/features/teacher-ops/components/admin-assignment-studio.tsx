@@ -14,7 +14,7 @@ import { Badge } from "@/features/teacher-ops/components/ui/badge";
 import { Button } from "@/features/teacher-ops/components/ui/button";
 import { FieldLabel, TextArea, TextInput } from "@/features/teacher-ops/components/ui/field";
 import { ScheduleGrid } from "@/features/teacher-ops/components/schedule-grid";
-import { addMinutes, buildScheduleBookings } from "@/features/teacher-ops/lib/data";
+import { addMinutes, getCurrentPlanSegment, getPlanSegments } from "@/features/teacher-ops/lib/data";
 import type { Course, ScheduleBooking, Student, StudentCoursePlan, Teacher } from "@/features/teacher-ops/lib/types";
 import { cn, formatCurrency } from "@/features/teacher-ops/lib/utils";
 import { getApiBaseUrl, getBrandHeaders } from "@/lib/brand-config";
@@ -60,6 +60,21 @@ const getAuthHeaders = () => {
   const token = window.localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
+
+function toDateTimeLocalValue(date = new Date()) {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+function isoFromDateTimeLocal(value: string) {
+  const date = value ? new Date(value) : new Date();
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+}
+
+function closeBefore(isoValue: string) {
+  const date = new Date(isoValue);
+  return new Date(date.getTime() - 60_000).toISOString();
+}
 
 function slotRange(start: string, duration: number) {
   const [hour, minute] = start.split(":").map(Number);
@@ -125,11 +140,13 @@ function createPreviewBookings({
 }
 
 function getPlanMonthlyFee(plan: StudentCoursePlan | undefined, student: Student | undefined) {
-  return plan?.monthlyFee ?? student?.monthlyFee ?? 0;
+  const segment = plan ? getCurrentPlanSegment(plan) : null;
+  return segment?.monthlyFee ?? plan?.monthlyFee ?? student?.monthlyFee ?? 0;
 }
 
 function getPlanTeacherRate(plan: StudentCoursePlan | undefined, teacher: Teacher | undefined) {
-  return plan?.teacherHourlyRate ?? teacher?.hourlySalaryRate ?? 1700;
+  const segment = plan ? getCurrentPlanSegment(plan) : null;
+  return segment?.teacherHourlyRate ?? plan?.teacherHourlyRate ?? teacher?.hourlySalaryRate ?? 1700;
 }
 
 function extractUploadUrl(body: unknown) {
@@ -147,12 +164,14 @@ export function AdminAssignmentStudio({
   courses,
   plans,
   initialBookings,
+  onSaved,
 }: {
   teachers: Teacher[];
   students: Student[];
   courses: Course[];
   plans: StudentCoursePlan[];
   initialBookings: ScheduleBooking[];
+  onSaved?: () => Promise<void> | void;
 }) {
   const [localPlans, setLocalPlans] = useState<StudentCoursePlan[]>(plans);
   const [teacherId, setTeacherId] = useState(teachers[0]?.id ?? "");
@@ -163,6 +182,8 @@ export function AdminAssignmentStudio({
   const [monthlyFee, setMonthlyFee] = useState(2500);
   const [teacherHourlyRate, setTeacherHourlyRate] = useState(teachers[0]?.hourlySalaryRate ?? 1700);
   const [classLink, setClassLink] = useState("https://meet.google.com/new-class-demo");
+  const [effectiveAt, setEffectiveAt] = useState(toDateTimeLocalValue());
+  const [changeReason, setChangeReason] = useState("New schedule assignment");
   const [courseTitle, setCourseTitle] = useState("Quran Class Live");
   const [courseDescription, setCourseDescription] = useState(
     "Personal learning plan assigned from central curriculum.",
@@ -174,14 +195,19 @@ export function AdminAssignmentStudio({
   const [selectedCurriculumId, setSelectedCurriculumId] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
   const [curriculumMessage, setCurriculumMessage] = useState("Loading saved curriculums...");
+  const [saving, setSaving] = useState(false);
 
   const student = students.find((item) => item.id === studentId) ?? students[0];
   const teacher = teachers.find((item) => item.id === teacherId) ?? teachers[0];
-  const selectedPlan = localPlans.find((plan) => plan.studentId === studentId && plan.teacherId === teacherId);
-  const selectedCourse = courses.find((course) => course.id === selectedPlan?.courseId);
+  const selectedPlan = localPlans.find(
+    (plan) =>
+      plan.studentId === studentId &&
+      getPlanSegments(plan).some((segment) => segment.teacherId === teacherId),
+  );
+  const studentPlanForHistory = selectedPlan || localPlans.find((plan) => plan.studentId === studentId);
   const existingBookings = useMemo(
-    () => (localPlans.length ? buildScheduleBookings(localPlans) : initialBookings),
-    [initialBookings, localPlans],
+    () => initialBookings,
+    [initialBookings],
   );
   const boardBaseBookings = useMemo(
     () =>
@@ -209,20 +235,37 @@ export function AdminAssignmentStudio({
   );
   const conflictCount = previewBookings.filter((booking) => booking.status === "conflict").length;
   const selectedCurriculum = curriculums.find((item) => item._id === selectedCurriculumId);
-  const isEditingExistingPlan = Boolean(selectedPlan);
+  const isEditingExistingPlan = Boolean(studentPlanForHistory);
+
+  useEffect(() => {
+    setLocalPlans(plans);
+  }, [plans]);
+
+  useEffect(() => {
+    if (!teacherId && teachers[0]?.id) setTeacherId(teachers[0].id);
+    if (!studentId && students[0]?.id) setStudentId(students[0].id);
+  }, [studentId, students, teacherId, teachers]);
 
   function applyPlanToForm(plan: StudentCoursePlan, nextTeacherId = plan.teacherId) {
-    const nextTeacher = teachers.find((item) => item.id === nextTeacherId);
+    const segment =
+      [...getPlanSegments(plan)].reverse().find((item) => item.teacherId === nextTeacherId) ||
+      getCurrentPlanSegment(plan) ||
+      getPlanSegments(plan)[0];
+    const segmentTeacherId = segment?.teacherId || nextTeacherId;
+    const nextTeacher = teachers.find((item) => item.id === segmentTeacherId);
     const nextStudent = students.find((item) => item.id === plan.studentId);
     const planCourse = courses.find((course) => course.id === plan.courseId);
 
-    setTeacherId(nextTeacherId);
-    setSelectedDays(plan.weeklyDays);
-    setStartTime(plan.startTime);
-    setDurationMinutes(plan.durationMinutes);
+    setTeacherId(segmentTeacherId);
+    setSelectedDays(segment?.weeklyDays || plan.weeklyDays);
+    setStartTime(segment?.startTime || plan.startTime);
+    setDurationMinutes(segment?.durationMinutes || plan.durationMinutes);
     setMonthlyFee(getPlanMonthlyFee(plan, nextStudent));
     setTeacherHourlyRate(getPlanTeacherRate(plan, nextTeacher));
-    setClassLink(plan.classLink);
+    setClassLink(segment?.classLink || plan.classLink);
+    setEffectiveAt(toDateTimeLocalValue());
+    setChangeReason(segment?.changeReason || "Schedule update");
+    if (plan.curriculumId) setSelectedCurriculumId(plan.curriculumId);
     setCourseTitle(planCourse?.name || "Course plan");
     setCourseDescription(planCourse?.description || plan.teacherNote || "Personal learning plan assigned from central curriculum.");
     setCourseImage(planCourse?.coverImage || "");
@@ -248,6 +291,8 @@ export function AdminAssignmentStudio({
     setSelectedDays(nextStudent?.weeklyDays ?? selectedDays);
     setStartTime(nextStudent?.startTime ?? startTime);
     setDurationMinutes(nextStudent?.durationMinutes ?? durationMinutes);
+    setEffectiveAt(toDateTimeLocalValue());
+    setChangeReason("New schedule assignment");
     setSavedMessage("No existing assignment found. Create a new schedule for this student.");
   }
 
@@ -264,6 +309,8 @@ export function AdminAssignmentStudio({
       return;
     }
 
+    setEffectiveAt(toDateTimeLocalValue());
+    setChangeReason("Teacher changed");
     setSavedMessage("No schedule exists for this teacher/student pair yet. Create a new one below.");
   }
 
@@ -272,7 +319,7 @@ export function AdminAssignmentStudio({
 
     async function loadCurriculums() {
       try {
-        const response = await fetch(`${getApiBaseUrl()}/curriculums?status=all`, {
+        const response = await fetch(`${getApiBaseUrl()}/curriculums?status=published`, {
           headers: { ...getBrandHeaders(), ...getAuthHeaders() },
           cache: "no-store",
         });
@@ -286,7 +333,7 @@ export function AdminAssignmentStudio({
         } else if (data.length) {
           setCurriculumMessage(`${data.length} saved curriculum${data.length === 1 ? "" : "s"} loaded.`);
         } else {
-          setCurriculumMessage("No saved curriculums found. Create one in Curriculum Management first.");
+          setCurriculumMessage("No published curriculum found. Publish one in Curriculum Management first.");
         }
       } catch {
         if (isMounted) {
@@ -348,37 +395,74 @@ export function AdminAssignmentStudio({
   }
 
   async function saveAssignment() {
+    if (!teacher || !student) {
+      setSavedMessage("Teacher and student data must load before assigning.");
+      return;
+    }
     if (!selectedDays.length || !courseTitle.trim() || !selectedCurriculumId || conflictCount > 0) {
       setSavedMessage("Fix course title, central curriculum, selected days, or schedule conflict before assigning.");
       return;
     }
+    if (!isMongoId(teacherId) || !isMongoId(studentId)) {
+      setSavedMessage("This assignment needs real backend teacher and student records. Demo IDs will not be saved.");
+      return;
+    }
+    setSaving(true);
+    setSavedMessage("Saving assignment to backend...");
 
-    const nextPlan: StudentCoursePlan = {
-      id: selectedPlan?.id || `LOCAL-${teacherId}-${studentId}-${Date.now()}`,
+    const effectiveFromIso = isoFromDateTimeLocal(effectiveAt);
+    const effectiveDate = new Date(effectiveFromIso);
+    const previousSegmentClosedAt = closeBefore(effectiveFromIso);
+    const basePlan = studentPlanForHistory;
+    const nextSegment = {
+      id: `${basePlan?.id || `LOCAL-${teacherId}-${studentId}`}-SEG-${Date.now()}`,
       studentId,
       teacherId,
-      courseId: selectedPlan?.courseId || courses[0]?.id || "COURSE-CUSTOM",
+      courseId: basePlan?.courseId || courses[0]?.id || "COURSE-CUSTOM",
       classLink,
       weeklyDays: selectedDays,
       startTime,
       durationMinutes,
       monthlyFee,
       teacherHourlyRate,
-      startDate: selectedPlan?.startDate || new Date().toISOString().slice(0, 10),
-      endDate: selectedPlan?.endDate,
-      currentLessonId: selectedPlan?.currentLessonId || "",
-      completedLessonIds: selectedPlan?.completedLessonIds || [],
-      assignedLessonIds: selectedPlan?.assignedLessonIds || [],
+      effectiveFrom: effectiveFromIso,
+      changeReason: changeReason.trim() || "Schedule update",
+      createdAt: new Date().toISOString(),
+    };
+    const previousSegments = basePlan
+      ? getPlanSegments(basePlan)
+          .filter((segment) => new Date(segment.effectiveFrom).getTime() !== effectiveDate.getTime())
+          .map((segment) => {
+            const segmentStart = new Date(segment.effectiveFrom);
+            const segmentEnd = segment.effectiveTo ? new Date(segment.effectiveTo) : null;
+            const shouldClose = segmentStart < effectiveDate && (!segmentEnd || segmentEnd >= effectiveDate);
+            return shouldClose ? { ...segment, effectiveTo: previousSegmentClosedAt } : segment;
+          })
+      : [];
+    const nextPlan: StudentCoursePlan = {
+      id: basePlan?.id || `LOCAL-${teacherId}-${studentId}-${Date.now()}`,
+      studentId,
+      teacherId,
+      courseId: nextSegment.courseId,
+      classLink,
+      weeklyDays: selectedDays,
+      startTime,
+      durationMinutes,
+      monthlyFee,
+      teacherHourlyRate,
+      startDate: basePlan?.startDate || effectiveFromIso.slice(0, 10),
+      endDate: undefined,
+      effectiveFrom: effectiveFromIso,
+      effectiveTo: undefined,
+      changeReason: nextSegment.changeReason,
+      segments: [...previousSegments, nextSegment],
+      currentLessonId: basePlan?.currentLessonId || "",
+      completedLessonIds: basePlan?.completedLessonIds || [],
+      assignedLessonIds: basePlan?.assignedLessonIds || [],
       updatedAt: new Date().toISOString().slice(0, 10),
       teacherNote: `Course plan: ${courseTitle}. ${courseDescription}`,
     };
-    setLocalPlans((current) => {
-      const exists = current.some((plan) => plan.id === nextPlan.id);
-      return exists ? current.map((plan) => (plan.id === nextPlan.id ? nextPlan : plan)) : [...current, nextPlan];
-    });
-
-    let backendConfirmed = false;
-    if (selectedCurriculumId) {
+    try {
       const response = await fetch(`${getApiBaseUrl()}/teacher-assignments`, {
         method: "POST",
         headers: {
@@ -391,8 +475,10 @@ export function AdminAssignmentStudio({
           teacherId: isMongoId(teacherId) ? teacherId : undefined,
           studentIds: isMongoId(studentId) ? [studentId] : [],
           assignedTo: "teacherClassPlan",
-          startDate: new Date().toISOString(),
-          teacherClassPlanId: `${teacherId}-${studentId}-${Date.now()}`,
+          startDate: effectiveFromIso,
+          effectiveFrom: effectiveFromIso,
+          changeReason: nextSegment.changeReason,
+          teacherClassPlanId: basePlan?.id || `${teacherId}-${studentId}-${Date.now()}`,
           coursePlan: {
             title: courseTitle.trim(),
             description: courseDescription.trim(),
@@ -405,18 +491,38 @@ export function AdminAssignmentStudio({
             classLink,
             monthlyFee,
             teacherHourlyRate,
+            effectiveFrom: effectiveFromIso,
           },
+          assignmentSegment: nextSegment,
           teacherNote: `Class link: ${classLink}`,
         }),
-      }).catch(() => null);
-      backendConfirmed = Boolean(response?.ok);
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(body?.message || body?.error || "Backend did not save the assignment.");
+      }
+      setLocalPlans((current) => {
+        const exists = current.some((plan) => plan.id === nextPlan.id);
+        return exists ? current.map((plan) => (plan.id === nextPlan.id ? nextPlan : plan)) : [...current, nextPlan];
+      });
+      await onSaved?.();
+      setSavedMessage(
+        `${isEditingExistingPlan ? "Updated" : "Assigned"} ${student.name} for ${teacher.name}. ${courseTitle} uses ${
+          selectedCurriculum?.title || "selected curriculum"
+        } from ${new Date(effectiveFromIso).toLocaleString()} with ${countCurriculumItems(selectedCurriculum)} lesson items. Backend saved and refreshed.`,
+      );
+    } catch (error) {
+      setSavedMessage(error instanceof Error ? error.message : "Assignment was not saved. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSavedMessage(
-      `${isEditingExistingPlan ? "Updated" : "Assigned"} ${student.name} for ${teacher.name}. ${courseTitle} uses ${
-        selectedCurriculum?.title || "selected curriculum"
-      } with ${countCurriculumItems(selectedCurriculum)} lesson items. ${
-        backendConfirmed ? "Backend saved." : "Local preview updated; backend needs real Mongo IDs and admin session to persist."
-      }`,
+  }
+
+  if (!teachers.length || !students.length) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        Real teacher/student data could not be loaded. Check admin login and backend connection.
+      </div>
     );
   }
 
@@ -526,6 +632,35 @@ export function AdminAssignmentStudio({
           </div>
         </div>
 
+        <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-[240px_1fr]">
+          <div>
+            <FieldLabel htmlFor="effective-at">Effective from</FieldLabel>
+            <TextInput
+              id="effective-at"
+              type="datetime-local"
+              value={effectiveAt}
+              className="mt-2"
+              onChange={(event) => setEffectiveAt(event.target.value)}
+            />
+            <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">
+              Salary minutes count only from this exact timestamp.
+            </p>
+          </div>
+          <div>
+            <FieldLabel htmlFor="change-reason">Change reason</FieldLabel>
+            <TextInput
+              id="change-reason"
+              value={changeReason}
+              className="mt-2"
+              onChange={(event) => setChangeReason(event.target.value)}
+              placeholder="Teacher changed, day changed, duration changed..."
+            />
+            <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">
+              The old schedule will close one minute before this timestamp.
+            </p>
+          </div>
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
             <FieldLabel htmlFor="start-time">Start time</FieldLabel>
@@ -616,6 +751,7 @@ export function AdminAssignmentStudio({
             <Badge tone="info">
               {selectedDays.length} days, {startTime}-{addMinutes(startTime, durationMinutes)}
             </Badge>
+            <Badge tone="neutral">Effective: {effectiveAt.replace("T", " ")}</Badge>
             <Badge tone="neutral">Fee admin-only: BDT {monthlyFee}</Badge>
             <Badge tone="neutral">Teacher rate: {formatCurrency(teacherHourlyRate)}/hour</Badge>
           </div>
@@ -642,9 +778,9 @@ export function AdminAssignmentStudio({
         ) : null}
 
         <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={saveAssignment}>
+          <Button type="button" onClick={saveAssignment} disabled={saving}>
             <CalendarPlus className="h-4 w-4" />
-            {isEditingExistingPlan ? "Update schedule" : "Assign and book"}
+            {saving ? "Saving..." : isEditingExistingPlan ? "Update schedule" : "Assign and book"}
           </Button>
         </div>
       </div>

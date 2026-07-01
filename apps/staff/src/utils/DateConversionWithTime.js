@@ -1,10 +1,16 @@
 
-export const DateConversionWithTime=(date)=>{
-    
-     var options = {  year: 'numeric', month: 'long', day: 'numeric' };
-    var today  = new Date(`${date}`)
-    
-  const convertedDate=  today.toLocaleString("en-US", options)
+export const DateConversionWithTime = (date, fallback = "Not set") => {
+  if (!date) return fallback;
 
-  return convertedDate
-}
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return fallback;
+  }
+
+  return parsedDate.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};

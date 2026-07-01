@@ -1,7 +1,13 @@
 "use client";
 
 import React from "react";
-import { Button } from "@/components/UI/button";
+import { DateConversionWithTime } from "@/utils/DateConversionWithTime";
+import {
+  formatWhatsappNumber,
+  getBrandName,
+  getTeacherBrandKeys,
+  getTeacherPublicStatus,
+} from "./teacherProfileUtils";
 
 const FileDownload = ({ url, label }) => {
   if (!url) return null;
@@ -35,8 +41,12 @@ const ViewDetails = ({ userData }) => {
         <div className="grid md:grid-cols-2 gap-4">
           <p><span className="font-medium">Name:</span> {userData.name}</p>
           <p><span className="font-medium">Father's Name:</span> {userData.fatherName}</p>
-          <p><span className="font-medium">Email:</span> {userData.email}</p>
+          <p><span className="font-medium">Email:</span> {userData.email ? userData.email.toLowerCase() : "Not set"}</p>
           <p><span className="font-medium">Phone:</span> {userData.number}</p>
+          <p><span className="font-medium">WhatsApp:</span> {formatWhatsappNumber(userData)}</p>
+          <p><span className="font-medium">Country:</span> {userData.country || "BD"} ({userData.countryCode || "+880"})</p>
+          <p><span className="font-medium">Public Status:</span> {getTeacherPublicStatus(userData)}</p>
+          <p><span className="font-medium">Brands:</span> {getTeacherBrandKeys(userData).map(getBrandName).join(", ")}</p>
           <p><span className="font-medium">Date of Birth:</span> {userData.dob}</p>
           <p><span className="font-medium">Nationality:</span> {userData.nationality}</p>
           <p><span className="font-medium">Marital Status:</span> {userData.married}</p>
@@ -89,7 +99,7 @@ const ViewDetails = ({ userData }) => {
       {/* Join Date */}
       <section>
         <h2 className="text-xl font-semibold mb-4">Join Date</h2>
-        <p>{userData.joiningDate}</p>
+        <p>{DateConversionWithTime(userData.joiningDate)}</p>
       </section>
 
       {/* Payment Info */}
