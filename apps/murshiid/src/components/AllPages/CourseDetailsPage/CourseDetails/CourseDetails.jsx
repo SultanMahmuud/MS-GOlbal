@@ -22,7 +22,11 @@ useEffect(() => {
       setLoading(true);
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/course/${courseID}`;
      
-      const response = await axios.get(url);
+      const response = await axios.get(url, {
+        headers: {
+          "X-Brand-Key": process.env.NEXT_PUBLIC_BRAND_KEY || "",
+        },
+      });
       setCourse(response.data?.data);
     } catch (error) {
       console.error("Failed to fetch course:", error);

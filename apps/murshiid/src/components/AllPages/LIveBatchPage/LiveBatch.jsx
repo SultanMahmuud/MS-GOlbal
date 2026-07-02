@@ -18,7 +18,11 @@ export default function LiveBatch() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/course`)
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/course`, {
+      headers: {
+        "X-Brand-Key": process.env.NEXT_PUBLIC_BRAND_KEY || "",
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
         setCourses(data.data);

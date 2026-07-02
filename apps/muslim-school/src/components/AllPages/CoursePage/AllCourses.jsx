@@ -24,7 +24,11 @@ export default function AllCourses() {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/course`)
+      .get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/course`, {
+        headers: {
+          "X-Brand-Key": process.env.NEXT_PUBLIC_BRAND_KEY || "",
+        },
+      })
       .then((res) => {
        
         setCourses(res?.data.data);
