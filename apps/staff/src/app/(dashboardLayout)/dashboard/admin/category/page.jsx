@@ -1,111 +1,64 @@
 "use client";
 
-import React from "react";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/UI/tabs";
+import React, { useState } from "react";
 import CourseCategory from "@/components/AdminDashboard/Category/CourseCategory";
 import BatchCategory from "@/components/AdminDashboard/Category/BatchCategory";
-import LibraryCategary from "@/components/AdminDashboard/Category/LibraryCategory";
-import BlogCategary from "@/components/AdminDashboard/Category/BlogCategory";
+import LibraryCategory from "@/components/AdminDashboard/Category/LibraryCategory";
+import BlogCategory from "@/components/AdminDashboard/Category/BlogCategory";
 import FAQCategory from "@/components/AdminDashboard/Category/FaqCategory";
-
+import { FolderKanban, BookOpen, Layers, MessageSquare, HelpCircle } from "lucide-react";
 
 const Category = () => {
+  const [activeTab, setActiveTab] = useState("course");
+
+  const tabItems = [
+    { id: "course", label: "Course Categories", icon: FolderKanban },
+    { id: "batch", label: "Batch Categories", icon: Layers },
+    { id: "library", label: "Library Categories", icon: BookOpen },
+    { id: "blog", label: "Blog Categories", icon: MessageSquare },
+    { id: "faq", label: "FAQ Categories", icon: HelpCircle }
+  ];
+
   return (
-    <div className="w-full mt-0">
-      <TabBar />
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800">Category settings</h1>
+        <p className="text-slate-500 text-sm mt-1">Configure taxonomies and categories across various sections of the platform.</p>
+      </div>
+
+      {/* Tabs list */}
+      <div className="flex border border-slate-100 rounded-xl bg-slate-50 p-1 w-full md:w-fit overflow-x-auto scrollbar-none gap-1 shadow-sm shrink-0">
+        {tabItems.map((tab) => {
+          const TabIcon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider py-2.5 px-4 rounded-lg transition-all shrink-0 cursor-pointer ${
+                isActive 
+                  ? "bg-emerald-600 text-white shadow-sm" 
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+              }`}
+            >
+              <TabIcon className="w-4 h-4 shrink-0" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Panels */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm min-h-[300px]">
+        {activeTab === "course" && <CourseCategory />}
+        {activeTab === "batch" && <BatchCategory />}
+        {activeTab === "library" && <LibraryCategory />}
+        {activeTab === "blog" && <BlogCategory />}
+        {activeTab === "faq" && <FAQCategory />}
+      </div>
     </div>
   );
 };
 
 export default Category;
-
-const TabBar = () => {
-  const featured = "text-center text-gray-700 py-2 my-2 font-medium";
-  const texteld =
-    "w-full mx-auto font-semibold shadow bg-white mt-0 mb-0 font-inter";
-  const button_form =
-    "w-full border-none my-1 py-2.5 px-4 rounded font-inter text-sm tracking-wide bg-yellow-500 text-white hover:bg-yellow-500 hover:text-black transition-transform cursor-pointer";
-  const featured__vis = "flex justify-around items-center font-inter";
-
-  return (
-    <Tabs defaultValue="1" className="w-full">
-      <TabsList className="bg-primary rounded-sm p-0 h-9 flex justify-start overflow-x-auto text-black mt-4">
-        <TabsTrigger value="1" className="text-sm h-9 px-4">
-          Course
-        </TabsTrigger>
-        <TabsTrigger value="2" className="text-sm h-9 px-4">
-          Batch
-        </TabsTrigger>
-        <TabsTrigger value="3" className="text-sm h-9 px-4">
-          Library
-        </TabsTrigger>
-        <TabsTrigger value="4" className="text-sm h-9 px-4">
-          Blog
-        </TabsTrigger>
-        <TabsTrigger value="5" className="text-sm h-9 px-4">
-          FAQ
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="1" className="p-0 mt-2 rounded-sm">
-        <div className="pl-0 py-4 rounded-sm">
-          <CourseCategory
-            featured={featured}
-            texteld={texteld}
-            featured__vis={featured__vis}
-            button_form={button_form}
-          />
-        </div>
-      </TabsContent>
-
-      <TabsContent value="2" className="p-0 mt-2 rounded-sm">
-        <div className="pl-0 py-4 rounded-sm">
-          <BatchCategory
-            featured={featured}
-            texteld={texteld}
-            featured__vis={featured__vis}
-            button_form={button_form}
-          />
-        </div>
-      </TabsContent>
-
-      <TabsContent value="3" className="p-0 mt-2 rounded-sm">
-        <div className="pl-0 py-4 rounded-sm">
-          <LibraryCategary
-            featured={featured}
-            texteld={texteld}
-            featured__vis={featured__vis}
-            button_form={button_form}
-          />
-        </div>
-      </TabsContent>
-
-      <TabsContent value="4" className="p-0 mt-2 rounded-sm">
-        <div className="pl-0 py-4 rounded-sm">
-          <BlogCategary
-            featured={featured}
-            texteld={texteld}
-            featured__vis={featured__vis}
-            button_form={button_form}
-          />
-        </div>
-      </TabsContent>
-
-      <TabsContent value="5" className="p-0 mt-2 rounded-sm">
-        <div className="pl-0 py-4 rounded-sm">
-          <FAQCategory
-            featured={featured}
-            texteld={texteld}
-            featured__vis={featured__vis}
-            button_form={button_form}
-          />
-        </div>
-      </TabsContent>
-    </Tabs>
-  );
-};
