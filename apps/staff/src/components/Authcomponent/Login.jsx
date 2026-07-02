@@ -11,7 +11,7 @@ import { tagTypes } from "@/redux/tag-types";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
-import { getAppKind, getApiBaseUrl, getBrandHeaders, getBrandKey, getDashboardPath } from "@/lib/brand-config";
+import { getAppKind, getBrandKey, getDashboardPath } from "@/lib/brand-config";
 
 const Login = ({ expectedRole, redirectPath }) => {
   const dispatch = useDispatch();
@@ -109,39 +109,25 @@ try {
   };
 
   const handleLogin = async () => {
-    if (!inputValue.trim()) return setSnackbarMessage("ফোন নম্বর বা ইমেইল দিন");
+    const trimmedInput = inputValue.trim();
+    if (!trimmedInput) return setSnackbarMessage("ফোন নম্বর বা ইমেইল দিন");
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10,15}$/;
 
-    if (emailRegex.test(inputValue)) {
-      setEmail(inputValue);
+    if (emailRegex.test(trimmedInput)) {
+      setEmail(trimmedInput.toLowerCase());
       setNumber("");
-    } else if (phoneRegex.test(inputValue)) {
-      setNumber(inputValue);
+    } else if (phoneRegex.test(trimmedInput)) {
+      setNumber(trimmedInput);
       setEmail("");
     } else {
       return setSnackbarMessage("ভ্যালিড ফোন নম্বর বা ইমেইল দিন");
     }
 
-    try {
-      const res = await fetch(`${getApiBaseUrl()}/otp/check`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...getBrandHeaders() },
-        body: JSON.stringify({ input: inputValue }),
-      });
-
-      const result = await res.json();
-
-      if (result.success && result.exists) {
-        setShowInitialSection(false);
-        setShowPassword(true);
-      } else {
-        setSnackbarMessage("একাউন্ট খুঁজে পাওয়া যায়নি");
-      }
-    } catch (error) {
-      setSnackbarMessage("সমস্যা হয়েছে, পরে চেষ্টা করুন");
-    }
+    setSnackbarMessage("");
+    setShowInitialSection(false);
+    setShowPassword(true);
   };
 
   const handleChangeNumberEmail = () => {
