@@ -21,6 +21,7 @@ const UpdateCourse = ({ params }) => {
   const [courseDesc, setCourseDesc] = useState("");
   const [curriculum, setCurriculum] = useState([]);
   const [curriculumId, setCurriculumId] = useState("");
+  const [brandKey, setBrandKey] = useState("muslim-school");
   const [faq, setFaq] = useState([]);
   const [pay, setPay] = useState([]);
   const [announcement, setAnnouncement] = useState("");
@@ -138,6 +139,7 @@ const UpdateCourse = ({ params }) => {
             setCourseDesc(data.description || "");
             setCurriculum(data.curriculum || []);
             setCurriculumId(data.curriculumId || "");
+            setBrandKey(data.brandKey || "muslim-school");
             setFaq(data.FAQ || []);
             setPay(data.pay || []);
             setAnnouncement(data.announcement || "");
@@ -206,10 +208,10 @@ const UpdateCourse = ({ params }) => {
     for (let i = 1; i <= 10; i++) {
       const fieldName = `courseF${i}`;
       fields.push(
-        <div key={fieldName} className="w-full md:w-1/2 px-2 mb-4">
+        <div key={fieldName}>
           <input
             type="text"
-            placeholder={`Enter Course Future ${i}`}
+            placeholder={`Enter Course Feature ${i}`}
             value={courseFuture[fieldName] || ""}
             onChange={(e) =>
               setCourseFuture({
@@ -217,7 +219,7 @@ const UpdateCourse = ({ params }) => {
                 [fieldName]: e.target.value,
               })
             }
-            className="w-full p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full h-10 px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-colors"
           />
         </div>
       );
@@ -301,6 +303,17 @@ const UpdateCourse = ({ params }) => {
   };
 
   const handlePublish = async (courseType) => {
+    if (courseType === "final" && visibility === "Public") {
+      if (!brandKey) {
+        alert("Brand is required to publish the course.");
+        return;
+      }
+      if (!curriculumId) {
+        alert("A central published curriculum is required to publish the course.");
+        return;
+      }
+    }
+
     const newCourse = {
       id: id,
       title: courseTitle,
@@ -309,6 +322,7 @@ const UpdateCourse = ({ params }) => {
       image: featuredImage? featuredImage : "",
       category: courseCategory,
       createdBy: "Admin",
+      brandKey: brandKey,
       lesson: totalLesson,
       durationHr: duration,
       certificate: certificate,
@@ -366,7 +380,7 @@ const UpdateCourse = ({ params }) => {
       return router.push("/dashboard/admin/course");
     } catch (error) {
       console.error("Error saving course:", error);
-      alert("Failed to save course. Please try again.");
+      alert(error.response?.data?.error || "Failed to save course. Please try again.");
     }
   };
 
@@ -399,142 +413,175 @@ const UpdateCourse = ({ params }) => {
     setPay(newFaq);
   };
 
-  const inputStyles =
-    "w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2";
-  const cardStyles = "bg-white rounded-lg shadow-md p-4 mt-4";
+  const inputStyles = "w-full h-10 px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-colors mt-1.5";
+  const selectStyles = "w-full h-10 px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-colors cursor-pointer mt-1.5";
+  const labelStyles = "block text-sm font-medium text-slate-700";
+  const sidebarCard = "bg-white rounded-xl border border-slate-200/80 p-4 shadow-sm";
+  const cardStyles = "bg-white rounded-xl shadow-sm border border-slate-100 p-5";
 
   return (
-    <div className="min-h-screen w-full">
-      <div className="max-w-6xl mx-auto">
-        <h3 className="text-2xl p-5 font-semibold">Create Course</h3>
-        <div className="flex flex-col">
-          <div className="lg:w-3xl xl:w-[90%] mx-auto lg:m-6">
+    <div className="min-h-screen w-full bg-slate-50/50 p-4 lg:p-6">
+      <div className="max-w-[1400px] mx-auto">
+        <h3 className="text-2xl font-bold text-slate-900 mb-6 px-2">Edit Course</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-6">
+            <Topcolumn
+              inputStyles={inputStyles}
+              cardStyles={cardStyles}
+              courseTitle={courseTitle}
+              setCourseTitle={setCourseTitle}
+              subtitle={subtitle}
+              setSubtitle={setSubtitle}
+              engTitle={engTitle}
+              setengTitle={setengTitle}
+              featuredVideo={featuredVideo}
+              setFeaturedVideo={setFeaturedVideo}
+              courseDesc={courseDesc}
+              setCourseDesc={setCourseDesc}
+              curriculum={curriculum}
+              handleDeleteLesson={handleDeleteLesson}
+              handleEditLesson={handleEditLesson}
+              AddNewLessonFunc={AddNewLessonFunc}
+              handleDeleteModule={handleDeleteModule}
+              handleAddNewModule={handleAddNewModule}
+              faq={faq}
+              pay={pay}
+              setPay={setPay}
+              handleDeleteFaq={handleDeleteFaq}
+              handleDeletePay={handleDeletePay}
+              announcement={announcement}
+              setAnnouncement={setAnnouncement}
+              whatLearn={whatLearn}
+              setWhatLearn={setWhatLearn}
+              whatYouGet={whatYouGet}
+              setWhatYouGet={setWhatYouGet}
+              courseForWhom={courseForWhom}
+              setcourseForWhom={setcourseForWhom}
+              courseWhy={courseWhy}
+              setcourseWhy={setcourseWhy}
+              courseWhyTitle={courseWhyTitle}
+              setCourseWhyTitle={setCourseWhyTitle}
+              handleInputChange={handleInputChange}
+              handleDelete={handleDelete}
+              addInputField={addInputField}
+            />
+          </div>
+
+          {/* Right Column */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Action Bar */}
+            <div className={`${sidebarCard} sticky top-4 z-10`}>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handlePublish("final")}
+                  className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors duration-200 shadow-sm"
+                >
+                  Update
+                </button>
+                <button
+                  onClick={() => handleDeleteCourse()}
+                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors duration-200"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+
+            {/* Featured Image */}
+            <div className={sidebarCard}>
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+                <div className="w-1 h-4 rounded-full bg-emerald-500"></div>
+                <h4 className="text-sm font-semibold text-slate-700">Featured Image</h4>
+              </div>
+              <CommonFileUpload url={featuredImage} setUrl={setFeaturedImage} />
+            </div>
+
+            {/* Curriculum Selector */}
             <CourseCurriculumSelector
               selectedCurriculumId={curriculumId}
               setSelectedCurriculumId={setCurriculumId}
+              brandKey={brandKey}
+              legacyCurriculum={curriculum}
             />
-          </div>
-          <Topcolumn
-            inputStyles={inputStyles}
-            cardStyles={cardStyles}
-            courseTitle={courseTitle}
-            setCourseTitle={setCourseTitle}
-            subtitle={subtitle}
-            setSubtitle={setSubtitle}
-            engTitle={engTitle}
-            setengTitle={setengTitle}
-            featuredVideo={featuredVideo}
-            setFeaturedVideo={setFeaturedVideo}
-            courseDesc={courseDesc}
-            setCourseDesc={setCourseDesc}
-            curriculum={curriculum}
-            handleDeleteLesson={handleDeleteLesson}
-            handleEditLesson={handleEditLesson}
-            AddNewLessonFunc={AddNewLessonFunc}
-            handleDeleteModule={handleDeleteModule}
-            handleAddNewModule={handleAddNewModule}
-            faq={faq}
-            pay={pay}
-            setPay={setPay}
-            handleDeleteFaq={handleDeleteFaq}
-            handleDeletePay={handleDeletePay}
-            setFaq={setFaq}
-            announcement={announcement}
-            setAnnouncement={setAnnouncement}
-            whatLearn={whatLearn}
-            setWhatLearn={setWhatLearn}
-            whatYouGet={whatYouGet}
-            setWhatYouGet={setWhatYouGet}
-            courseForWhom={courseForWhom}
-            setcourseForWhom={setcourseForWhom}
-            courseWhy={courseWhy}
-            setcourseWhy={setcourseWhy}
-            courseWhyTitle={courseWhyTitle}
-            setCourseWhyTitle={setCourseWhyTitle}
-            handleInputChange={handleInputChange}
-            handleDelete={handleDelete}
-            addInputField={addInputField}
-          />
 
-          {/* Right Column */}
-          <div className="lg:w-3xl xl:w-[90%] mx-auto lg:m-6">
-            <div className={cardStyles}>
-              <h3 className="text-lg font-semibold mb-4">Course Settings</h3>
-
-              <div className="mb-6">
-                <CommonFileUpload
-                  url={featuredImage}
-                  setUrl={setFeaturedImage}
-                />
+            {/* Brand & Classification */}
+            <div className={sidebarCard}>
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+                <div className="w-1 h-4 rounded-full bg-emerald-500"></div>
+                <h4 className="text-sm font-semibold text-slate-700">Brand & Classification</h4>
               </div>
-              <div className="flex gap-2 w-full justify-between">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Medium
-                  </label>
+              <div className="space-y-3">
+                <div>
+                  <label className={labelStyles}>Brand</label>
+                  <select
+                    value={brandKey}
+                    onChange={(e) => setBrandKey(e.target.value)}
+                    className={selectStyles}
+                  >
+                    <option value="muslim-school">Muslim School</option>
+                    <option value="quran-care">Quran Care</option>
+                    <option value="murshiid">Murshiid</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelStyles}>Medium</label>
                   <select
                     value={medium}
                     onChange={(e) => setMedium(e.target.value)}
-                    className={inputStyles}
+                    className={selectStyles}
                   >
-                    <option value="সিঙ্গেল লাইভ ক্লাস">
-                      সিঙ্গেল লাইভ ক্লাস
-                    </option>
+                    <option value="Record Course">Record Course</option>
+                    <option value="সিঙ্গেল লাইভ ক্লাস">সিঙ্গেল লাইভ ক্লাস</option>
                     <option value="লাইভ ব্যাচ">লাইভ ব্যাচ</option>
                   </select>
                 </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Category
-                  </label>
+                <div>
+                  <label className={labelStyles}>Course Category</label>
                   <select
                     value={courseCategory}
                     onChange={(e) => setCourseCategory(e.target.value)}
-                    className={inputStyles}
+                    className={selectStyles}
                   >
-                    {allCategory.map((option ,idx) => (
-                      <option key={idx} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rank
-                  </label>
-                  <select
-                    value={courseRank}
-                    onChange={(e) => setCourseRank(e.target.value)}
-                    className={inputStyles}
-                  >
-                    {[
-                      "None",
-                      "Hot",
-                      "New",
-                      "Bestseller",
-                      "Popular",
-                      "Special",
-                    ].map((option) => (
+                    {allCategory.map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className={labelStyles}>Rank</label>
+                  <select
+                    value={courseRank}
+                    onChange={(e) => setCourseRank(e.target.value)}
+                    className={selectStyles}
+                  >
+                    {["none", "Hot", "New", "Bestseller", "Popular", "Special"].map(
+                      (option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+              </div>
+            </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teacher
-                  </label>
+            {/* Teacher */}
+            <div className={sidebarCard}>
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+                <div className="w-1 h-4 rounded-full bg-emerald-500"></div>
+                <h4 className="text-sm font-semibold text-slate-700">Teacher</h4>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className={labelStyles}>Assign Teacher</label>
                   <TeacherAddBox setTeacher={setTeacher} teacher={teacher} />
                 </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teacher Name
-                  </label>
+                <div>
+                  <label className={labelStyles}>Teacher Name</label>
                   <input
                     className={inputStyles}
                     value={teacherName}
@@ -543,90 +590,85 @@ const UpdateCourse = ({ params }) => {
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="mb-6">
-                <h4 className="block text-2xl font-bold text-gray-700 mb-2">
-                  Price Section
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Price
-                    </label>
-                    <input
-                      className={inputStyles}
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      placeholder="Price"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sale Price
-                    </label>
-                    <input
-                      className={inputStyles}
-                      value={salePrice}
-                      onChange={(e) => setSalePrice(e.target.value)}
-                      placeholder="Sale Price"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Bangla Price
-                    </label>
-                    <input
-                      className={inputStyles}
-                      value={banPrice}
-                      onChange={(e) => setBanPrice(e.target.value)}
-                      placeholder="Bangla Price"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Bangla Sale Price
-                    </label>
-                    <input
-                      className={inputStyles}
-                      value={banSalePrice}
-                      onChange={(e) => setBanSalePrice(e.target.value)}
-                      placeholder="Bangla Sale Price"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Promo Code
-                    </label>
-                    <input
-                      className={inputStyles}
-                      value={PromoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      placeholder="Promo Code"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Promo Percentage
-                    </label>
-                    <input
-                      type="number"
-                      className={inputStyles}
-                      value={PromoPercentage}
-                      onChange={(e) => setPromoPercentage(e.target.value)}
-                      placeholder="Promo Percentage"
-                    />
-                  </div>
+            {/* Pricing */}
+            <div className={sidebarCard}>
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+                <div className="w-1 h-4 rounded-full bg-emerald-500"></div>
+                <h4 className="text-sm font-semibold text-slate-700">Pricing</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelStyles}>Price</label>
+                  <input
+                    className={inputStyles}
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="Price"
+                  />
+                </div>
+                <div>
+                  <label className={labelStyles}>Sale Price</label>
+                  <input
+                    className={inputStyles}
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
+                    placeholder="Sale Price"
+                  />
+                </div>
+                <div>
+                  <label className={labelStyles}>Bangla Price</label>
+                  <input
+                    className={inputStyles}
+                    value={banPrice}
+                    onChange={(e) => setBanPrice(e.target.value)}
+                    placeholder="Bangla Price"
+                  />
+                </div>
+                <div>
+                  <label className={labelStyles}>Bangla Sale Price</label>
+                  <input
+                    className={inputStyles}
+                    value={banSalePrice}
+                    onChange={(e) => setBanSalePrice(e.target.value)}
+                    placeholder="Bangla Sale Price"
+                  />
+                </div>
+                <div>
+                  <label className={labelStyles}>Promo Code</label>
+                  <input
+                    className={inputStyles}
+                    value={PromoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Promo Code"
+                  />
+                </div>
+                <div>
+                  <label className={labelStyles}>Promo %</label>
+                  <input
+                    type="number"
+                    className={inputStyles}
+                    value={PromoPercentage}
+                    onChange={(e) => setPromoPercentage(e.target.value)}
+                    placeholder="Promo %"
+                  />
                 </div>
               </div>
+            </div>
 
-              <label className="block text-2xl font-bold text-gray-700 mb-2">
+            {/* Course Details */}
+            <div className={sidebarCard}>
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+                <div className="w-1 h-4 rounded-full bg-emerald-500"></div>
+                <h4 className="text-sm font-semibold text-slate-700">Course Details</h4>
+              </div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                 Student Facility
-              </label>
-              <div className="flex  gap-4 mb-4 w-full justify-between">
+              </p>
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Total Enrolled
-                  </label>
+                  <label className={labelStyles}>Total Enrolled</label>
                   <input
                     type="number"
                     className={inputStyles}
@@ -636,9 +678,7 @@ const UpdateCourse = ({ params }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Class Note
-                  </label>
+                  <label className={labelStyles}>Class Note</label>
                   <input
                     className={inputStyles}
                     value={classNote}
@@ -647,20 +687,16 @@ const UpdateCourse = ({ params }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Lecture
-                  </label>
+                  <label className={labelStyles}>Lecture</label>
                   <input
                     className={inputStyles}
                     value={lectures}
                     onChange={(e) => setLectures(e.target.value)}
-                    placeholder="Lectures"
+                    placeholder="Lecture"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Duration
-                  </label>
+                  <label className={labelStyles}>Duration</label>
                   <input
                     className={inputStyles}
                     value={courseDuration}
@@ -669,14 +705,12 @@ const UpdateCourse = ({ params }) => {
                   />
                 </div>
               </div>
-              <label className="block text-2xl font-bold text-gray-700 mt-6 mb-2">
-                Course Details page Features
-              </label>
-              <div className="flex  gap-4 mb-4 w-full justify-between">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Details Page Features
+              </p>
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Total Live Class
-                  </label>
+                  <label className={labelStyles}>Total Live Class</label>
                   <input
                     type="number"
                     className={inputStyles}
@@ -686,9 +720,7 @@ const UpdateCourse = ({ params }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Class Video Note
-                  </label>
+                  <label className={labelStyles}>Class Video Note</label>
                   <input
                     className={inputStyles}
                     value={classVideoNote}
@@ -697,9 +729,7 @@ const UpdateCourse = ({ params }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Level
-                  </label>
+                  <label className={labelStyles}>Level</label>
                   <input
                     className={inputStyles}
                     value={coursedetailsLevel}
@@ -708,9 +738,7 @@ const UpdateCourse = ({ params }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Fee
-                  </label>
+                  <label className={labelStyles}>Course Fee</label>
                   <input
                     className={inputStyles}
                     value={courseFee}
@@ -719,12 +747,9 @@ const UpdateCourse = ({ params }) => {
                   />
                 </div>
               </div>
-
-              <div className="flex  gap-4 mb-4 w-full items-center">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Description
-                  </label>
+                  <label className={labelStyles}>Course Description</label>
                   <input
                     className={inputStyles}
                     value={courseDescription}
@@ -732,11 +757,8 @@ const UpdateCourse = ({ params }) => {
                     placeholder="Course Description"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Enrolled
-                  </label>
+                  <label className={labelStyles}>Course Enrolled</label>
                   <input
                     className={inputStyles}
                     value={courseEnrolled}
@@ -744,76 +766,76 @@ const UpdateCourse = ({ params }) => {
                     placeholder="Course Enrolled"
                   />
                 </div>
-                <div>
-                  <label className="flex items-center gap-2 mt-6">
-                    <span className="text-lg font-medium">Certificate </span>
-                    <input
-                      type="checkbox"
-                      checked={certificate}
-                      onChange={handleCertificateClick}
-                      className="mr-2"
-                    />
-                  </label>
-                </div>
               </div>
-              <div className="mt-6">
-                <h4 className="block text-2xl font-bold text-gray-700 mb-2">
-                  Course Futures
-                </h4>
-                <div className="flex flex-wrap -mx-2">
-                  {renderCourseFutures()}
-                </div>
-              </div>
+              <label className="flex items-center gap-2 mt-4 p-2.5 rounded-lg bg-slate-50 border border-slate-100 cursor-pointer transition-colors hover:bg-slate-100/70">
+                <input
+                  type="checkbox"
+                  checked={certificate}
+                  onChange={handleCertificateClick}
+                  className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0"
+                />
+                <span className="text-sm font-medium text-slate-700">Certificate</span>
+              </label>
+            </div>
 
-              <div className="mb-6">
-                <h4 className="block text-2xl font-bold text-gray-700 mb-2">
-                  Course Highlighters
-                </h4>
-                <div className="space-y-4 grid grid-cols-2 gap-4">
+            {/* Course Features */}
+            <div className={sidebarCard}>
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+                <div className="w-1 h-4 rounded-full bg-emerald-500"></div>
+                <h4 className="text-sm font-semibold text-slate-700">Course Features</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {renderCourseFutures()}
+              </div>
+            </div>
+
+            {/* Highlighters */}
+            <div className={sidebarCard}>
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+                <div className="w-1 h-4 rounded-full bg-emerald-500"></div>
+                <h4 className="text-sm font-semibold text-slate-700">Highlighters</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelStyles}>Course Time</label>
                   <input
                     type="text"
                     placeholder="Course Time"
+                    value={courseTime}
                     onChange={(e) => setCourseTime(e.target.value)}
                     className={inputStyles}
-                    value={courseTime}
                   />
+                </div>
+                <div>
+                  <label className={labelStyles}>Course Seat</label>
                   <input
                     type="text"
                     placeholder="Course Seat"
+                    value={courseSeat}
                     onChange={(e) => setCourseSeat(e.target.value)}
                     className={inputStyles}
-                    value={courseSeat}
                   />
+                </div>
+                <div>
+                  <label className={labelStyles}>Course Day</label>
                   <input
                     type="text"
                     placeholder="Course Day"
+                    value={courseDate}
                     onChange={(e) => setCourseDay(e.target.value)}
                     className={inputStyles}
-                    value={courseDate}
                   />
+                </div>
+                <div>
+                  <label className={labelStyles}>Single Highlighter</label>
                   <input
                     type="text"
                     placeholder="Single Highlighter"
+                    value={singleHighlighter}
                     onChange={(e) => setSingleHighlighter(e.target.value)}
                     className={inputStyles}
-                    value={singleHighlighter}
                   />
                 </div>
-              </div>
-
-              <div className="flex gap-4">
-                <button
-                  onClick={() => handlePublish("final")}
-                  className="flex-1 px-2 py-3 bg-primary text-white rounded-lg  transition duration-200"
-                >
-                  Update
-                </button>
-                <button
-                  onClick={() => handleDeleteCourse()}
-                  className="flex-1 px-2 py-3 bg-red-500 text-white rounded-lg  transition duration-200"
-                >
-                  Delete
-                </button>
               </div>
             </div>
           </div>

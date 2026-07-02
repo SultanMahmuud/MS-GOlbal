@@ -130,14 +130,25 @@ export default function CourseCard({ course, dashboard }) {
 
           
           {/* Provider and Price */}
-            <div className="flex justify-between mt-4">
-              <div className="flex flex-col items-start ">
+            <div className="flex justify-between mt-4 items-center">
+              <div className="flex flex-col items-start gap-1">
                 <div className="flex items-center text-gray-700 gap-2">
                   <FaUniversity className="text-gray-500" />
                   <span className="font-medium">
                     {course?.provider || "Muslim School"}
                   </span>
                 </div>
+                {dashboard && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                    course?.brandKey === 'quran-care' 
+                      ? 'bg-teal-50 text-teal-700 border-teal-200' 
+                      : course?.brandKey === 'murshiid' 
+                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  }`}>
+                    {course?.brandKey === 'quran-care' ? 'Quran Care' : course?.brandKey === 'murshiid' ? 'Murshiid' : 'Muslim School'}
+                  </span>
+                )}
               </div>
               <div className="flex flex-col items-end leading-none">
                 <span className="text-lg font-extrabold text-gray-900">

@@ -49,10 +49,9 @@ const Topcolumn = ({
   addInputField,
 }) => {
   return (
-    <div>
-      <div className="lg:w-3xl xl:w-[90%] lg:m-6 mx-auto">
-        <div className={cardStyles}>
-          {/* Course Basic Info */}
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+        {/* Course Basic Info */}
           <input
             className={inputStyles}
             onChange={(e) => setCourseTitle(e.target.value)}
@@ -81,16 +80,6 @@ const Topcolumn = ({
           <div className="mt-6">
             <AddCourseTab
               com1={<CourseDesc savedValue={courseDesc} setValue={setCourseDesc} />}
-              com2={
-                <EditCuriCulumn
-                  curriculumData={curriculum}
-                  handleDeleteLesson={handleDeleteLesson}
-                  handleEditLesson={handleEditLesson}
-                  AddNewLessonFunc={AddNewLessonFunc}
-                  handleDeleteModule={handleDeleteModule}
-                  handleAddNewModule={handleAddNewModule}
-                />
-              }
               com3={<EditFAQ faq={faq} handleDeleteFaq={handleDeleteFaq} setFaq={setFaq} />}
               com4={<EditFAQ faq={pay} handleDeletePay={handleDeletePay} setFaq={setPay} />}
               com5={<Announcement setAnnouncement={setAnnouncement} />}
@@ -98,7 +87,7 @@ const Topcolumn = ({
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">What You'll Learn</h3>
                   {whatLearn?.map((value, index) => (
-                    <div key={index} className="space-y-2">
+                    <div key={index} className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-100">
                       <input
                         className={inputStyles}
                         value={value.title}
@@ -116,7 +105,7 @@ const Topcolumn = ({
                         placeholder="Upload URL"
                       />
                       <button
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        className="px-4 py-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded text-sm font-semibold transition-colors mt-2"
                         onClick={() => handleDelete(index, setWhatLearn)}
                       >
                         Delete
@@ -124,7 +113,7 @@ const Topcolumn = ({
                     </div>
                   ))}
                   <button
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors text-sm font-semibold"
                     onClick={() => addInputField(setWhatLearn, { title: "", uploadUrl: "" })}
                   >
                     Add More
@@ -135,7 +124,7 @@ const Topcolumn = ({
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">What You Get</h3>
                   {whatYouGet?.map((value, index) => (
-                    <div key={index} className="space-y-2">
+                    <div key={index} className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-100">
                       <input
                         className={inputStyles}
                         value={value.uploadUrl}
@@ -161,7 +150,7 @@ const Topcolumn = ({
                         placeholder="Subtitle"
                       />
                       <button
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        className="px-4 py-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded text-sm font-semibold transition-colors mt-2"
                         onClick={() => handleDelete(index, setWhatYouGet)}
                       >
                         Delete
@@ -169,12 +158,12 @@ const Topcolumn = ({
                     </div>
                   ))}
                   <button
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors text-sm font-semibold"
                     onClick={() =>
                       addInputField(setWhatYouGet, { uploadUrl: "", title: "", subtitle: "" })
                     }
                   >
-                    Add Course
+                    Add More
                   </button>
                 </div>
               }
@@ -192,7 +181,7 @@ const Topcolumn = ({
                         placeholder="Target Audience"
                       />
                       <button
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 whitespace-nowrap"
+                        className="px-4 py-2 bg-red-500/90 hover:bg-red-600 text-white rounded transition-colors text-sm font-semibold whitespace-nowrap"
                         onClick={() => handleDelete(index, setcourseForWhom)}
                       >
                         Delete
@@ -200,10 +189,10 @@ const Topcolumn = ({
                     </div>
                   ))}
                   <button
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors text-sm font-semibold"
                     onClick={() => addInputField(setcourseForWhom, { title: "" })}
                   >
-                    Add Course
+                    Add More
                   </button>
                 </div>
               }
@@ -240,8 +229,8 @@ const Topcolumn = ({
                   </div>
 
                   {courseWhy?.map((value, index) => (
-                    <div key={index} className="space-y-2">
-                      <label className="font-semibold">Course why details</label>
+                    <div key={index} className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <label className="font-semibold text-slate-700 text-xs">Course why details</label>
                       <input
                         className={inputStyles}
                         value={value.uploadUrl}
@@ -267,7 +256,7 @@ const Topcolumn = ({
                         placeholder="Subtitle"
                       />
                       <select
-                        className={inputStyles}
+                        className="w-full h-10 px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-colors cursor-pointer mt-1.5"
                         value={value.layout}
                         onChange={(e) =>
                           handleInputChange(index, "layout", e.target.value, setcourseWhy)
@@ -278,7 +267,7 @@ const Topcolumn = ({
                         <option value="row-reverse">Row Reverse</option>
                       </select>
                       <button
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        className="px-4 py-1.5 bg-red-500/90 hover:bg-red-600 text-white rounded text-sm font-semibold transition-colors mt-2"
                         onClick={() => handleDelete(index, setcourseWhy)}
                       >
                         Delete
@@ -286,7 +275,7 @@ const Topcolumn = ({
                     </div>
                   ))}
                   <button
-                    className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors text-sm font-semibold"
                     onClick={() =>
                       addInputField(setcourseWhy, {
                         uploadUrl: "",
@@ -296,7 +285,7 @@ const Topcolumn = ({
                       })
                     }
                   >
-                    Add Course
+                    Add More
                   </button>
                 </div>
               }
@@ -304,7 +293,6 @@ const Topcolumn = ({
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
