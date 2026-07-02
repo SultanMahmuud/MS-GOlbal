@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import AdminFeedbackCard from './AdminFeedbackCard';
 import { Star, MessageSquarePlus, Search, SlidersHorizontal, BarChart3, Eye } from 'lucide-react';
 import Link from 'next/link';
+import { getApiBaseUrl } from '@/lib/brand-config';
 
 const AllFeedback = () => {
   const [reviews, setReviews] = useState([]);
@@ -13,13 +14,22 @@ const AllFeedback = () => {
   const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/reviews/getReview`)
-      .then((res) => res.json())
+    fetch(`${getApiBaseUrl()}/api/v1/reviews/getReview`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Review API failed with status ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
-        setReviews(data?.reverse());
+        setReviews(Array.isArray(data) ? [...data].reverse() : []);
         setIsLoading(false);
       })
-      .catch(() => setIsLoading(false));
+      .catch((error) => {
+        console.error('Failed to fetch reviews:', error);
+        setReviews([]);
+        setIsLoading(false);
+      });
   }, [isLoading]);
 
   // Computed stats

@@ -7,6 +7,7 @@ import {
   Eye, FileText, ChevronUp, AlertCircle
 } from "lucide-react"
 import { toast } from "sonner"
+import { getApiBaseUrl } from "@/lib/brand-config"
 
 // Color mapper for FAQ categories in preview
 const getCategoryBadgeStyles = (categoryName) => {
@@ -31,12 +32,12 @@ const CreateFaq = () => {
   const [loading, setLoading] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(true) // Live accordion toggle state
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  const API_BASE = getApiBaseUrl();
 
   useEffect(() => {
     fetch(`${API_BASE}/category`)
       .then((res) => res.json())
-      .then((data) => setCategory(data.data.reverse()))
+      .then((data) => setCategory(Array.isArray(data?.data) ? [...data.data].reverse() : []))
       .catch((err) => console.error("Error fetching categories:", err))
   }, [API_BASE])
 

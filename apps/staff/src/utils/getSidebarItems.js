@@ -48,7 +48,7 @@ export const baseSidebarItems = [
     ],
   },
   {
-    title: "Curriculum Management",
+    title: "Curriculum",
     url: "/dashboard/admin/curriculum-management",
     icon: ClipboardList,
     roles: ["admin"],

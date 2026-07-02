@@ -10,8 +10,9 @@ import AddCourseFaq from"./AddCourseFaq"
 import TeacherAddBox from "./TeacherAddBox";
 import CommonFileUpload from "@/components/Shared/FileUpload/CommonFileUpload"
 import CourseCurriculumSelector from "./CourseCurriculumSelector";
+import { getApiBaseUrl } from "@/lib/brand-config";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE_URL = getApiBaseUrl();
 
 
 
@@ -237,7 +238,7 @@ const AddCourse = () => {
 
   useEffect(() => {
     axios
-      .get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/role/teacher`)
+      .get(`${BASE_URL}/user/role/teacher`)
       .then((res) => {
         setTeacher(res?.data.data || []);
       })

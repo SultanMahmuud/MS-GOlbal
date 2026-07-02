@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Star, MessageSquarePlus, ChevronDown } from 'lucide-react';
 import CommonFileUpload from '@/components/Shared/FileUpload/CommonFileUpload';
+import { getApiBaseUrl } from '@/lib/brand-config';
 
 const suggestTopics = [{ title: 'ReviewPage' }, { title: 'HomePage' }, { title: 'CoursePage' }];
 
@@ -18,7 +19,7 @@ const Feedback = () => {
   const [hoveredStar, setHoveredStar] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  const API_BASE = getApiBaseUrl();
 
   const onSubmit = (data) => {
     setLoading(true);

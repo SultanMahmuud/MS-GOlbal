@@ -333,7 +333,7 @@ export function AdminAssignmentStudio({
         } else if (data.length) {
           setCurriculumMessage(`${data.length} saved curriculum${data.length === 1 ? "" : "s"} loaded.`);
         } else {
-          setCurriculumMessage("No published curriculum found. Publish one in Curriculum Management first.");
+          setCurriculumMessage("No published curriculum found. Publish one in Curriculum first.");
         }
       } catch {
         if (isMounted) {

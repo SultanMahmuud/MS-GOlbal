@@ -25,7 +25,7 @@ const AddBook = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
 
   useEffect(() => {
     fetch(`${API_BASE}/category`)
@@ -67,6 +67,10 @@ const AddBook = () => {
     const filteredAuthors = authors.filter((name) => name.trim() !== "");
     if (filteredAuthors.length === 0) {
       toast.error("Please add at least one author");
+      return;
+    }
+    if (!bookImages[0]) {
+      toast.error("Please upload the main cover image before publishing");
       return;
     }
 

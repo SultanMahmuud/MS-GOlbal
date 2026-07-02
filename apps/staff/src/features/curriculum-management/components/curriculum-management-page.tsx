@@ -1054,7 +1054,7 @@ export function CurriculumManagementPage() {
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-emerald-700">Admin only</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Curriculum Management</h1>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Curriculum</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               Build reusable paid learning structures with semesters, modules, class videos, live classes,
               quizzes, assignments, notes, and teacher instructions.

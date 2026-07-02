@@ -21,7 +21,7 @@ const UpdateLibrary = ({ itemId, handleClose, singleBook, refreshBooks }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
 
   // Pre-populate form with pre-fetched singleBook data
   useEffect(() => {

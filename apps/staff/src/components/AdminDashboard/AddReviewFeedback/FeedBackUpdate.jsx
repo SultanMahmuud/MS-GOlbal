@@ -16,6 +16,7 @@ import { Button } from "@/components/UI/button";
 import { toast } from "sonner";
 import { Star, Pencil, ImagePlus, X, Loader2, ChevronDown } from "lucide-react";
 import CommonFileUpload from "@/components/Shared/FileUpload/CommonFileUpload";
+import { getApiBaseUrl } from "@/lib/brand-config";
 
 const suggestTopics = [{ title: "ReviewPage" }, { title: "HomePage" }, { title: "CoursePage" }];
 
@@ -34,7 +35,7 @@ const FeedbackUpdate = ({ itemId }) => {
   useEffect(() => {
     if (itemId && open) {
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/reviews/getReview/${itemId}`
+        `${getApiBaseUrl()}/api/v1/reviews/getReview/${itemId}`
       )
         .then((res) => res.json())
         .then((data) => {
@@ -60,7 +61,7 @@ const FeedbackUpdate = ({ itemId }) => {
     setSaving(true);
     try {
       await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/reviews/${itemId}`,
+        `${getApiBaseUrl()}/api/v1/reviews/${itemId}`,
         { ...formData, rating: Number(rating) }
       );
       toast.success("Feedback updated successfully");

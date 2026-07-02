@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/brand-config";
 
 const TeacherAddBox = ({ setTeacher, selectedTeacherId }) => {
   const [teachers, setTeachers] = useState([]);
@@ -9,7 +10,7 @@ const TeacherAddBox = ({ setTeacher, selectedTeacherId }) => {
     const fetchTeachers = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/user/role/teacher`
+          `${getApiBaseUrl()}/user/role/teacher`
         );
         setTeachers(response.data?.data || []);
       } catch (error) {

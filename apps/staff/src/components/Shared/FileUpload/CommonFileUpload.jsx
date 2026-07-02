@@ -4,6 +4,14 @@ import axios from 'axios';
 import { FaCloudUploadAlt } from 'react-icons/fa';
 import { ImSpinner2 } from 'react-icons/im';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8080";
+
+const getUploadedUrl = (data) => {
+  if (!data) return "";
+  if (typeof data === "string") return data;
+  return data.url || data.imageUrl || data.secure_url || data.data?.url || data.data || "";
+};
+
 const CommonFileUpload = ({ setUrl, url, label }) => {
  
   const [file, setFile] = useState(null);
@@ -11,7 +19,6 @@ const CommonFileUpload = ({ setUrl, url, label }) => {
 
   const handleImageChange = (e) => {
     const selectedFile = e.target.files[0];
-    console.log(selectedFile,'selected file')
     setFile(selectedFile);
   };
 
@@ -24,12 +31,18 @@ const CommonFileUpload = ({ setUrl, url, label }) => {
     formData.append('file', file);
 
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/images`, formData);
-      console.log(res,'response image')
-      setUrl(res.data?.url); // <-- replace the URL with new one
+      const res = await axios.post(`${API_BASE}/images`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const uploadedUrl = getUploadedUrl(res.data);
+      if (!uploadedUrl) {
+        throw new Error("Upload finished but no file URL was returned");
+      }
+      setUrl(uploadedUrl);
+      setFile(null);
       alert('Upload successful!');
     } catch (error) {
-      alert('Upload failed');
+      alert(error?.response?.data?.message || error?.message || 'Upload failed');
       console.error(error);
     } finally {
       setLoading(false);

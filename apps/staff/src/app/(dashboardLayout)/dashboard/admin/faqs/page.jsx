@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { Trash } from "lucide-react"
+import { toast } from "sonner"
+import { getApiBaseUrl } from "@/lib/brand-config"
 
 import { MdExpandMore } from "react-icons/md"
 
@@ -17,13 +19,18 @@ export default function FAQPage() {
   const fetchFAQs = async () => {
     try {
       setLoading(true)
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/faq`)
-      const reversed = res?.data?.data?.reverse()
+      const res = await axios.get(`${getApiBaseUrl()}/faq`)
+      const reversed = Array.isArray(res?.data?.data)
+        ? [...res.data.data].reverse()
+        : []
       
       setFaq(reversed)
       setFilteredFaq(reversed)
     } catch (err) {
+      console.error("Failed to load FAQs:", err)
       toast.error("Failed to load FAQs")
+      setFaq([])
+      setFilteredFaq([])
     } finally {
       setLoading(false)
     }
@@ -40,12 +47,13 @@ export default function FAQPage() {
 
   const handleFAQDelete = async (id) => {
     try {
-      const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/faq/${id}`)
-      if (res.status === 201) {
-        alert("FAQ has been deleted")
+      const res = await axios.delete(`${getApiBaseUrl()}/faq/${id}`)
+      if (res.status >= 200 && res.status < 300) {
+        toast.success("FAQ has been deleted")
         fetchFAQs()
       }
     } catch (error) {
+      console.error("Failed to delete FAQ:", error)
       toast.error("Error! Something went wrong.")
     }
   }

@@ -5,6 +5,7 @@ import axios from 'axios';
 import FeedbackUpdate from './FeedBackUpdate';
 import { Star, Trash2, Calendar, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { getApiBaseUrl } from '@/lib/brand-config';
 
 const PAGE_BADGE_STYLES = {
   ReviewPage: 'bg-teal-50 text-teal-700 border-teal-100',
@@ -19,7 +20,7 @@ const AdminFeedbackCard = ({ reviews, setIsLoading }) => {
   const handleDelete = (id) => {
     if (!confirm('Are you sure you want to delete this feedback?')) return;
     axios
-      .delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/reviews/getReview/${id}`)
+      .delete(`${getApiBaseUrl()}/api/v1/reviews/getReview/${id}`)
       .then(() => {
         toast.success('Review deleted successfully');
         setIsLoading(true);

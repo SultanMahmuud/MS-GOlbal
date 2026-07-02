@@ -1,6 +1,7 @@
 "use client";
 
 import CourseCard from "@/components/Shared/CourseCard/CourseCard";
+import { getApiBaseUrl } from "@/lib/brand-config";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
@@ -15,11 +16,18 @@ const DraftCourse = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/course/admin`)
+    fetch(`${getApiBaseUrl()}/course/admin`)
       .then((res) => res.json())
       .then((data) => {
-        setCourses(data.data);
-        setSearchResult(data.data);
+        const courseList = Array.isArray(data?.data) ? data.data : [];
+        setCourses(courseList);
+        setSearchResult(courseList);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching draft courses:", error);
+        setCourses([]);
+        setSearchResult([]);
         setLoading(false);
       });
   }, []);
