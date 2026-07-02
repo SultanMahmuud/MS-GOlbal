@@ -83,7 +83,10 @@ const DraftCourse = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {displayedCourses.map((element, index) => (
             <div key={index}>
-              <Link href={`/dashboard/admin/course/${element._id}`}>
+              <Link
+                href={`/dashboard/admin/course/${element._id}`}
+                className="w-fit h-fit block"
+              >
                 <CourseCard
                   course={element}
                   loading={loading}

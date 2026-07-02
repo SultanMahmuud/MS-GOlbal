@@ -8,8 +8,16 @@ import TeacherAddBox from "@/components/AdminDashboard/AdminCourse/TeacherAddBox
 import { useRouter } from "next/navigation";
 import Topcolumn  from "@/components/AdminDashboard/AdminCourse/UpdateCourse/Topcolumn"
 import CourseCurriculumSelector from "@/components/AdminDashboard/AdminCourse/CourseCurriculumSelector";
+import { getApiBaseUrl, getBrandHeaders } from "@/lib/brand-config";
+
+const getAuthHeaders = () => {
+  if (typeof window === "undefined") return {};
+  const token = window.localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const UpdateCourse = ({ params }) => {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const BASE_URL = getApiBaseUrl();
 
   const unwrappedParams = React.use(params);
   const id = unwrappedParams.courseId;
@@ -127,7 +135,13 @@ const UpdateCourse = ({ params }) => {
     if (id) {
       axios
         .get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/course/single-admin/${id}`
+          `${BASE_URL}/course/single-admin/${id}`,
+          {
+            headers: {
+              ...getBrandHeaders(),
+              ...getAuthHeaders(),
+            },
+          }
         )
         .then((res) => {
           const data = res?.data?.data;
@@ -375,7 +389,12 @@ const UpdateCourse = ({ params }) => {
     };
 
     try {
-      await axios.put(`${BASE_URL}/course/update`, newCourse);
+      await axios.put(`${BASE_URL}/course/update`, newCourse, {
+        headers: {
+          ...getBrandHeaders(),
+          ...getAuthHeaders(),
+        },
+      });
       alert("Course updated successfully!");
       return router.push("/dashboard/admin/course");
     } catch (error) {
@@ -386,7 +405,12 @@ const UpdateCourse = ({ params }) => {
 
   useEffect(() => {
     axios
-      .get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/role/teacher`)
+      .get(`${BASE_URL}/user/role/teacher`, {
+        headers: {
+          ...getBrandHeaders(),
+          ...getAuthHeaders(),
+        },
+      })
       .then((res) => {
         setTeacher(res?.data.data || []);
       })
@@ -397,7 +421,12 @@ const UpdateCourse = ({ params }) => {
 
   const handleDeleteCourse = async () => {
     if (window.confirm("are you sure")) {
-      await axios.delete(`${BASE_URL}/course/delete/${id}`);
+      await axios.delete(`${BASE_URL}/course/delete/${id}`, {
+        headers: {
+          ...getBrandHeaders(),
+          ...getAuthHeaders(),
+        },
+      });
       return router.push("/dashboard/admin/course");
     }
   };

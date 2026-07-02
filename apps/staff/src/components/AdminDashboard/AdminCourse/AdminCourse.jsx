@@ -171,6 +171,7 @@ const AdminCourse = () => {
               <Link
                 key={course._id}
                 href={`/dashboard/admin/course/${course?._id}`}
+                className="w-fit h-fit block"
               >
                 <CourseCard dashboard={true} course={course} />
               </Link>
