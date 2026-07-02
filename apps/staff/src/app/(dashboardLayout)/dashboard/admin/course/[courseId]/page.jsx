@@ -429,7 +429,7 @@ const UpdateCourse = ({ params }) => {
           },
         });
         alert("Course duplicated successfully!");
-        router.push(`/dashboard/admin/course/${res.data.data._id}`);
+        window.location.href = `/dashboard/admin/course/${res.data.data._id}`;
       } catch (error) {
         console.error("Error duplicating course:", error);
         alert(error.response?.data?.error || "Failed to duplicate course.");
