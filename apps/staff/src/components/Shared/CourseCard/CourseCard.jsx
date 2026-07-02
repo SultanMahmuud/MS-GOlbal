@@ -1,7 +1,14 @@
 'use client';
 import  { useState } from "react";
-import { FaHeart, FaUniversity } from "react-icons/fa";
+import { FaHeart, FaUniversity, FaCopy } from "react-icons/fa";
 import axios from "axios";
+import { getApiBaseUrl, getBrandHeaders } from "@/lib/brand-config";
+
+const getAuthHeaders = () => {
+  if (typeof window === "undefined") return {};
+  const token = window.localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 
 
@@ -139,15 +146,46 @@ export default function CourseCard({ course, dashboard }) {
                   </span>
                 </div>
                 {dashboard && (
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                    course?.brandKey === 'quran-care' 
-                      ? 'bg-teal-50 text-teal-700 border-teal-200' 
-                      : course?.brandKey === 'murshiid' 
-                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}>
-                    {course?.brandKey === 'quran-care' ? 'Quran Care' : course?.brandKey === 'murshiid' ? 'Murshiid' : 'Muslim School'}
-                  </span>
+                  <div className="flex flex-col gap-1.5 items-start mt-1">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                      course?.brandKey === 'quran-care' 
+                        ? 'bg-teal-50 text-teal-700 border-teal-200' 
+                        : course?.brandKey === 'murshiid' 
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}>
+                      {course?.brandKey === 'quran-care' ? 'Quran Care' : course?.brandKey === 'murshiid' ? 'Murshiid' : 'Muslim School'}
+                    </span>
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.confirm(`Are you sure you want to duplicate "${course?.title || 'this course'}"?`)) {
+                          try {
+                            const res = await axios.post(
+                              `${getApiBaseUrl()}/course/duplicate/${course._id}`,
+                              {},
+                              {
+                                headers: {
+                                  ...getBrandHeaders(),
+                                  ...getAuthHeaders(),
+                                },
+                              }
+                            );
+                            alert("Course duplicated successfully!");
+                            window.location.href = `/dashboard/admin/course/${res.data.data._id}`;
+                          } catch (err) {
+                            console.error("Error duplicating course:", err);
+                            alert(err.response?.data?.error || "Failed to duplicate course.");
+                          }
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-emerald-700 bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-200/50 px-2 py-0.5 rounded-md transition duration-200 cursor-pointer"
+                    >
+                      <FaCopy size={10} />
+                      Duplicate
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="flex flex-col items-end leading-none">

@@ -419,6 +419,24 @@ const UpdateCourse = ({ params }) => {
       });
   }, []);
 
+  const handleDuplicateCourse = async () => {
+    if (window.confirm(`Are you sure you want to duplicate "${courseTitle || 'this course'}"?`)) {
+      try {
+        const res = await axios.post(`${BASE_URL}/course/duplicate/${id}`, {}, {
+          headers: {
+            ...getBrandHeaders(),
+            ...getAuthHeaders(),
+          },
+        });
+        alert("Course duplicated successfully!");
+        router.push(`/dashboard/admin/course/${res.data.data._id}`);
+      } catch (error) {
+        console.error("Error duplicating course:", error);
+        alert(error.response?.data?.error || "Failed to duplicate course.");
+      }
+    }
+  };
+
   const handleDeleteCourse = async () => {
     if (window.confirm("are you sure")) {
       await axios.delete(`${BASE_URL}/course/delete/${id}`, {
@@ -501,16 +519,22 @@ const UpdateCourse = ({ params }) => {
           <div className="lg:col-span-1 space-y-4">
             {/* Action Bar */}
             <div className={`${sidebarCard} sticky top-4 z-10`}>
-              <div className="flex gap-3">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => handlePublish("final")}
-                  className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors duration-200 shadow-sm"
+                  className="flex-1 min-w-[70px] px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors duration-200 shadow-sm"
                 >
                   Update
                 </button>
                 <button
+                  onClick={() => handleDuplicateCourse()}
+                  className="flex-1 min-w-[70px] px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-colors duration-200 border border-slate-200"
+                >
+                  Duplicate
+                </button>
+                <button
                   onClick={() => handleDeleteCourse()}
-                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors duration-200"
+                  className="flex-1 min-w-[70px] px-3 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors duration-200"
                 >
                   Delete
                 </button>
